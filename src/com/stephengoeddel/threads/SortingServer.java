@@ -8,6 +8,7 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class SortingServer {
@@ -27,7 +28,7 @@ public class SortingServer {
                         numbers.add(Integer.parseInt(line));
                     }
 
-                    new Sorter(numbers).run();
+                    Collections.sort(numbers);
 
                     PrintWriter printWriter = new PrintWriter(socket.getOutputStream(), true);
                     for (Integer number : numbers) {

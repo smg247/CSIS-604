@@ -5,7 +5,6 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class Driver {
@@ -34,22 +33,23 @@ public class Driver {
         List<List<Integer>> subLists = createSubLists(amountOfNumbers, numberOfThreadsOrPorts);
 
         List<Integer> mergeResult = null;
-        if (usingThreads) {
-            try {
-                List<Thread> threads = sortByThreads(subLists);
-                for (Thread thread : threads) {
-                    thread.join();
-                }
-
-                mergeResult = mergeSort(subLists);
-            } catch (InterruptedException e) {
-                System.out.println("Error while thread merging: " + e.getMessage());
+        try {
+            List<Thread> threads;
+            if (usingThreads) {
+                threads = sortByThreads(subLists);
+            } else {
+                threads = sortBySockets(subLists, serverPorts);
             }
-        } else {
-            List<List<Integer>> sortedSubLists = sortBySockets(subLists, serverPorts);
-            mergeResult = mergeSort(sortedSubLists);
+
+            for (Thread thread : threads) {
+                thread.join();
+            }
+
+            mergeResult = mergeSort(subLists);
+        } catch (InterruptedException e) {
+            System.out.println("Error while thread merging: " + e.getMessage());
         }
-        
+
         if (mergeResult != null) {
             outputSortedNumbersToFile(mergeResult);
         } else {
@@ -92,7 +92,7 @@ public class Driver {
     private static List<Thread> sortByThreads(List<List<Integer>> subLists) {
         List<Thread> threads = new ArrayList<>();
         for (List<Integer> subList : subLists) {
-            Thread thread = new Thread(new Sorter(subList));
+            Thread thread = new Thread(new SimpleSorter(subList));
             thread.start();
             threads.add(thread);
         }
@@ -100,34 +100,19 @@ public class Driver {
         return threads;
     }
 
-    private static List<List<Integer>> sortBySockets(List<List<Integer>> subLists, List<Integer> serverPorts) throws IOException {
+    private static List<Thread> sortBySockets(List<List<Integer>> subLists, List<Integer> serverPorts) throws IOException {
         if (subLists.size() == serverPorts.size()) {
-            List<List<Integer>> sortedSubLists = new ArrayList<>();
+            List<Thread> threads = new ArrayList<>();
             for (int i = 0; i < subLists.size(); i++) {
                 List<Integer> subList = subLists.get(i);
                 int serverPort = serverPorts.get(i);
-                Socket socket = new Socket(SERVER_ADDRESS, serverPort);
-                BufferedReader inputReader = new BufferedReader(
-                        new InputStreamReader(socket.getInputStream()));
-                PrintWriter printWriter = new PrintWriter(socket.getOutputStream(), true);
-
-                for (Integer integer : subList) {
-                    printWriter.println(integer);
-                }
-                printWriter.println("."); // The period allows the SortingServer to know we are out of input for it
-
-                List<Integer> sortedSubList = new ArrayList<>();
-                String line;
-                while ((line = inputReader.readLine()) != null) {
-                    sortedSubList.add(Integer.parseInt(line));
-                }
-
-                sortedSubLists.add(sortedSubList);
+                Thread thread = new Thread(new RemoteSorter(subList, SERVER_ADDRESS, serverPort));
+                thread.start();
+                threads.add(thread);
             }
-
-            return sortedSubLists;
+            return threads;
         } else {
-            throw new IllegalArgumentException("SubList size does not match the amount of servers to sort with.");
+            throw new IllegalArgumentException("Number of subLists does not match the number of servers");
         }
     }
 

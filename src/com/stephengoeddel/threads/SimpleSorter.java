@@ -4,10 +4,10 @@ package com.stephengoeddel.threads;
 import java.util.Collections;
 import java.util.List;
 
-class Sorter implements Runnable {
+class SimpleSorter implements Runnable {
     private List<Integer> numbers;
 
-    Sorter(List<Integer> numbers) {
+    SimpleSorter(List<Integer> numbers) {
         this.numbers = numbers;
     }
 
