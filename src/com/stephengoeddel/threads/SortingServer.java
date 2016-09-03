@@ -19,6 +19,7 @@ public class SortingServer {
         try {
             while (true) {
                 Socket socket = serverSocket.accept();
+                System.out.println("Received Connection");
                 try {
                     BufferedReader inputReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
@@ -27,6 +28,7 @@ public class SortingServer {
                     while ((line = inputReader.readLine()) != null && !".".equals(line)) {
                         numbers.add(Integer.parseInt(line));
                     }
+                    System.out.println("Recieved " + numbers.size() + " numbers");
 
                     Collections.sort(numbers);
 
@@ -34,6 +36,8 @@ public class SortingServer {
                     for (Integer number : numbers) {
                         printWriter.println(number);
                     }
+
+                    System.out.println("Output " + numbers.size() + " numbers");
                 } finally {
                     System.out.println("Closing socket");
                     socket.close();
