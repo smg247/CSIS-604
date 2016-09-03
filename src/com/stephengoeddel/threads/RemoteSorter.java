@@ -38,6 +38,8 @@ public class RemoteSorter implements Runnable {
             while ((line = inputReader.readLine()) != null) {
                 numbers.add(Integer.parseInt(line));
             }
+
+            socket.close();
         } catch (IOException e) {
             System.out.println("Encountered exception while attempting to sort remotely: " + e.getMessage());
             System.exit(1);
