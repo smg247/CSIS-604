@@ -28,7 +28,7 @@ public class SortingServer {
                     while ((line = inputReader.readLine()) != null && !".".equals(line)) {
                         numbers.add(Integer.parseInt(line));
                     }
-                    System.out.println("Recieved " + numbers.size() + " numbers");
+                    System.out.println("Received " + numbers.size() + " numbers");
 
                     Collections.sort(numbers);
 
