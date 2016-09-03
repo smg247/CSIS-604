@@ -9,8 +9,6 @@ import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class Driver {
-    public static int SERVER_PORT = 8000;
-
     private static String UNSORTED_NUMBERS_FILENAME = "unsorted-numbers.txt";
     private static String SORTED_NUMBERS_FILENAME = "sorted-numbers.txt";
     private static String SERVER_ADDRESS = "127.0.0.1";

@@ -13,7 +13,8 @@ import java.util.List;
 public class SortingServer {
 
     public static void main(String[] args) throws IOException {
-        ServerSocket serverSocket = new ServerSocket(Driver.SERVER_PORT);
+        int serverPort = Integer.parseInt(args[0]);
+        ServerSocket serverSocket = new ServerSocket(serverPort);
         try {
             while (true) {
                 Socket socket = serverSocket.accept();
