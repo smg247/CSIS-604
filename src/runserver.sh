@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-java -cp . com.stephengoeddel.threads.SortingServer
+java -cp . com.stephengoeddel.threads.SortingServer 8000
