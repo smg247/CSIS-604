@@ -1,4 +1,4 @@
-package com.stephengoeddel.threads;
+package com.stephengoeddel.distributedSorting;
 
 
 import java.util.Collections;

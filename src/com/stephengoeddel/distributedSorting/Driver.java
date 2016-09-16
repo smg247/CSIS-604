@@ -1,7 +1,6 @@
-package com.stephengoeddel.threads;
+package com.stephengoeddel.distributedSorting;
 
 import java.io.*;
-import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -14,12 +13,12 @@ public class Driver {
 
     public static void main(String[] args) throws IOException {
         boolean generateFile = args[0] != null ? Boolean.valueOf(args[0]) : true;
-        boolean usingThreads = args[1] != null ? Boolean.valueOf(args[1]) : true;
+        Procedure procedure = Procedure.valueOf(args[1]);
         final int amountOfNumbers = args[2] != null ? Integer.parseInt(args[2]) : 1000;
         final int numberOfThreadsOrPorts = args[3] != null ? Integer.parseInt(args[3]) : 3;
 
         List<Integer> serverPorts = new ArrayList<>();
-        if (!usingThreads) {
+        if (procedure == Procedure.sockets) {
             List<Object> argList = Arrays.asList(args);
             for (Object arg : argList.subList(4, argList.size())) {
                 serverPorts.add(Integer.parseInt(arg.toString()));
@@ -35,7 +34,7 @@ public class Driver {
         List<Integer> mergeResult = null;
         try {
             List<Thread> threads;
-            if (usingThreads) {
+            if (procedure == Procedure.threads) {
                 threads = sortByThreads(subLists);
             } else {
                 threads = sortBySockets(subLists, serverPorts);
