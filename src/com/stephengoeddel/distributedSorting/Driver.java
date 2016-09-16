@@ -1,6 +1,9 @@
 package com.stephengoeddel.distributedSorting;
 
 import java.io.*;
+import java.rmi.Naming;
+import java.rmi.NotBoundException;
+import java.rmi.Remote;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -18,11 +21,15 @@ public class Driver {
         final int numberOfThreadsOrPorts = args[3] != null ? Integer.parseInt(args[3]) : 3;
 
         List<Integer> serverPorts = new ArrayList<>();
-        if (procedure == Procedure.sockets) {
+        if (procedure != Procedure.threads) {
             List<Object> argList = Arrays.asList(args);
             for (Object arg : argList.subList(4, argList.size())) {
                 serverPorts.add(Integer.parseInt(arg.toString()));
             }
+        }
+
+        if (procedure == Procedure.rmi && System.getSecurityManager() == null) {
+            System.setSecurityManager(new SecurityManager());
         }
 
         if (generateFile) {
@@ -37,7 +44,7 @@ public class Driver {
             if (procedure == Procedure.threads) {
                 threads = sortByThreads(subLists);
             } else {
-                threads = sortBySockets(subLists, serverPorts);
+                threads = sortRemotely(subLists, serverPorts, procedure);
             }
 
             for (Thread thread : threads) {
@@ -99,13 +106,18 @@ public class Driver {
         return threads;
     }
 
-    private static List<Thread> sortBySockets(List<List<Integer>> subLists, List<Integer> serverPorts) throws IOException {
+    private static List<Thread> sortRemotely(List<List<Integer>> subLists, List<Integer> serverPorts, Procedure procedure) throws IOException {
         if (subLists.size() == serverPorts.size()) {
             List<Thread> threads = new ArrayList<>();
             for (int i = 0; i < subLists.size(); i++) {
                 List<Integer> subList = subLists.get(i);
                 int serverPort = serverPorts.get(i);
-                Thread thread = new Thread(new RemoteSorter(subList, SERVER_ADDRESS, serverPort));
+                Thread thread;
+                if (procedure == Procedure.sockets || procedure == Procedure.rmi) {
+                    thread = new Thread(new RemoteSorter(subList, SERVER_ADDRESS, serverPort, procedure));
+                } else {
+                    throw new IllegalArgumentException("Procedure: " + procedure.name() + " is not valid for sortingRemotely");
+                }
                 thread.start();
                 threads.add(thread);
             }
