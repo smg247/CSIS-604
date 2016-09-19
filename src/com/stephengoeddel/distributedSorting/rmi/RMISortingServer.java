@@ -1,7 +1,9 @@
-package com.stephengoeddel.distributedSorting;
+package com.stephengoeddel.distributedSorting.rmi;
 
 import java.rmi.Naming;
 import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Collections;
 import java.util.List;
@@ -13,19 +15,21 @@ public class RMISortingServer extends UnicastRemoteObject implements RMISortingS
     }
 
     @Override
-    public void sort(List<Integer> numbers) throws RemoteException {
+    public List<Integer> sort(List<Integer> numbers) throws RemoteException {
         Collections.sort(numbers);
+        System.out.println("Sorted " + numbers.size() + " numbers");
+        return numbers;
     }
 
     public static void main(String[] args) {
-        //TODO: figure out how to make this server run on a particular port...is that something that I need to do?
         if (System.getSecurityManager() == null) {
             System.setSecurityManager(new SecurityManager());
         }
 
         try {
+            Registry registry = LocateRegistry.createRegistry(8000);
             RMISortingService service = new RMISortingServer();
-            Naming.bind(SERVICE_NAME, service);
+            registry.bind(SERVICE_NAME, service);
         } catch (Exception exception) {
             System.out.println("Exception while creating and binding the RMISortingServer: " + exception.getMessage());
         }

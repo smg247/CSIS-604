@@ -1,12 +1,11 @@
 package com.stephengoeddel.distributedSorting;
 
+import com.stephengoeddel.distributedSorting.sorters.RemoteSorter;
+import com.stephengoeddel.distributedSorting.sorters.SimpleSorter;
+import com.stephengoeddel.distributedSorting.sorters.Sorter;
+
 import java.io.*;
-import java.rmi.Naming;
-import java.rmi.NotBoundException;
-import java.rmi.Remote;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class Driver {
@@ -40,18 +39,20 @@ public class Driver {
 
         List<Integer> mergeResult = null;
         try {
-            List<Thread> threads;
+            Map<Thread, Sorter> threads;
             if (procedure == Procedure.threads) {
                 threads = sortByThreads(subLists);
             } else {
                 threads = sortRemotely(subLists, serverPorts, procedure);
             }
 
-            for (Thread thread : threads) {
+            List<List<Integer>> sortedSubLists = new ArrayList<>();
+            for (Thread thread : threads.keySet()) {
                 thread.join();
+                sortedSubLists.add(threads.get(thread).getNumbers());
             }
 
-            mergeResult = mergeSort(subLists);
+            mergeResult = mergeSort(sortedSubLists);
         } catch (InterruptedException e) {
             System.out.println("Error while thread merging: " + e.getMessage());
         }
@@ -95,31 +96,35 @@ public class Driver {
         return subLists;
     }
 
-    private static List<Thread> sortByThreads(List<List<Integer>> subLists) {
-        List<Thread> threads = new ArrayList<>();
+    private static Map<Thread, Sorter> sortByThreads(List<List<Integer>> subLists) {
+        Map<Thread, Sorter> threads = new HashMap<>();
         for (List<Integer> subList : subLists) {
-            Thread thread = new Thread(new SimpleSorter(subList));
+            Sorter simpleSorter = new SimpleSorter(subList);
+            Thread thread = new Thread(simpleSorter);
             thread.start();
-            threads.add(thread);
+            threads.put(thread, simpleSorter);
         }
 
         return threads;
     }
 
-    private static List<Thread> sortRemotely(List<List<Integer>> subLists, List<Integer> serverPorts, Procedure procedure) throws IOException {
+    private static Map<Thread, Sorter> sortRemotely(List<List<Integer>> subLists, List<Integer> serverPorts, Procedure procedure) throws IOException {
         if (subLists.size() == serverPorts.size()) {
-            List<Thread> threads = new ArrayList<>();
+            Map<Thread, Sorter> threads = new HashMap<>();
             for (int i = 0; i < subLists.size(); i++) {
                 List<Integer> subList = subLists.get(i);
                 int serverPort = serverPorts.get(i);
-                Thread thread;
-                if (procedure == Procedure.sockets || procedure == Procedure.rmi) {
-                    thread = new Thread(new RemoteSorter(subList, SERVER_ADDRESS, serverPort, procedure));
+                Sorter sorter;
+                if (procedure == Procedure.sockets) {
+                    sorter = RemoteSorter.forSockets(subList, SERVER_ADDRESS, serverPort);
+                } else if (procedure == Procedure.rmi) {
+                    sorter = RemoteSorter.forRMI(subList, SERVER_ADDRESS, serverPort);
                 } else {
                     throw new IllegalArgumentException("Procedure: " + procedure.name() + " is not valid for sortingRemotely");
                 }
+                Thread thread = new Thread(sorter);
                 thread.start();
-                threads.add(thread);
+                threads.put(thread, sorter);
             }
             return threads;
         } else {

@@ -1,4 +1,4 @@
-package com.stephengoeddel.distributedSorting;
+package com.stephengoeddel.distributedSorting.sockets;
 
 
 import java.io.BufferedReader;

@@ -1,4 +1,4 @@
-package com.stephengoeddel.distributedSorting;
+package com.stephengoeddel.distributedSorting.sorters;
 
 
 import java.io.BufferedReader;
@@ -6,32 +6,16 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.rmi.Naming;
 import java.util.List;
 
-public class RemoteSorter implements Runnable {
-    private List<Integer> numbers;
-    private final String serverAddress;
-    private final int serverPort;
-    private final Procedure procedure;
+class SocketSorter extends RemoteSorter {
 
-    public RemoteSorter(List<Integer> numbers, String serverAddress, int serverPort, Procedure procedure) {
-        this.numbers = numbers;
-        this.serverAddress = serverAddress;
-        this.serverPort = serverPort;
-        this.procedure = procedure;
+    SocketSorter(List<Integer> numbers, String serverAddress, int serverPort) {
+        super(numbers, serverAddress, serverPort);
     }
 
     @Override
     public void run() {
-        if (procedure == Procedure.sockets) {
-            useSockets();
-        } else if (procedure == Procedure.rmi) {
-
-        }
-    }
-
-    private void useSockets() {
         try {
             Socket socket = new Socket(serverAddress, serverPort);
             BufferedReader inputReader = new BufferedReader(
@@ -53,15 +37,6 @@ public class RemoteSorter implements Runnable {
         } catch (IOException e) {
             System.out.println("Encountered exception while attempting to sort with sockets: " + e.getMessage());
             System.exit(1);
-        }
-    }
-
-    private void useRMI() {
-        try {
-            RMISortingService rmiSortingService = (RMISortingService) Naming.lookup("rmi://" + serverAddress + ":" + serverPort + RMISortingService.SERVICE_NAME);
-            rmiSortingService.sort(numbers);
-        } catch (Exception e) {
-            System.out.println("Encountered exception while attempting to sort with RMI: " + e.getMessage());
         }
     }
 }
