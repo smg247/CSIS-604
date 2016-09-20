@@ -211,8 +211,4 @@ public class Driver {
     private static boolean hasGoneThroughList(int currentIndex, List<Integer> list) {
         return currentIndex >= list.size();
     }
-
-    private static void populateSortedNumbersFromQueue(List<List<Integer>> sortedSubLists) {
-
-    }
 }

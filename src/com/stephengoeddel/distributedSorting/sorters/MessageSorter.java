@@ -7,7 +7,7 @@ import org.apache.activemq.ActiveMQConnectionFactory;
 import javax.jms.*;
 import java.util.List;
 
-public class MessageSorter extends RemoteSorter implements ExceptionListener {
+class MessageSorter extends RemoteSorter implements ExceptionListener {
 
     MessageSorter(List<Integer> numbers, String serverAddress, int serverPort) {
         super(numbers, serverAddress, serverPort);
@@ -30,9 +30,9 @@ public class MessageSorter extends RemoteSorter implements ExceptionListener {
 
         Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
 
-        Destination destination = session.createQueue("Unsorted");
+        Destination unsortedQueue = session.createQueue("Unsorted");
 
-        MessageProducer producer = session.createProducer(destination);
+        MessageProducer producer = session.createProducer(unsortedQueue);
         producer.setDeliveryMode(DeliveryMode.NON_PERSISTENT);
 
         String numberString = StringUtily.createStringFromNumbers(numbers);
@@ -51,9 +51,9 @@ public class MessageSorter extends RemoteSorter implements ExceptionListener {
         connection.setExceptionListener(this);
 
         Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-        Queue unsortedQueue = session.createQueue("Sorted");
+        Queue sortedQueue = session.createQueue("Sorted");
 
-        MessageConsumer consumer = session.createConsumer(unsortedQueue);
+        MessageConsumer consumer = session.createConsumer(sortedQueue);
         Message message = consumer.receive(100000);
         if (message instanceof TextMessage) {
             TextMessage textMessage = (TextMessage) message;
