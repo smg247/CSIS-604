@@ -27,7 +27,7 @@ public class MessageServer {
         }
     }
 
-    static class SortingMessageConsumer implements Runnable, ExceptionListener {
+    static class SortingMessageConsumer implements Runnable {
         private final int serverPort;
 
         SortingMessageConsumer(int serverPort) {
@@ -43,7 +43,6 @@ public class MessageServer {
                 ActiveMQConnectionFactory activeMQConnectionFactory = new ActiveMQConnectionFactory("tcp://" + Driver.SERVER_ADDRESS + ":" + serverPort);
                 connection = activeMQConnectionFactory.createConnection();
                 connection.start();
-                connection.setExceptionListener(this);
 
                 session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
                 Queue unsortedQueue = session.createQueue("Unsorted");
@@ -79,11 +78,6 @@ public class MessageServer {
                     System.exit(1);
                 }
             }
-        }
-
-        @Override
-        public void onException(JMSException e) {
-            System.out.println("JMS Exception: " + e.getMessage());
         }
     }
 }
