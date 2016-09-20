@@ -1,11 +1,13 @@
 package com.stephengoeddel.distributedSorting;
 
-import com.stephengoeddel.distributedSorting.messages.SortedNumberConsumer;
 import com.stephengoeddel.distributedSorting.sorters.RemoteSorter;
 import com.stephengoeddel.distributedSorting.sorters.SimpleSorter;
 import com.stephengoeddel.distributedSorting.sorters.Sorter;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
