@@ -22,12 +22,14 @@ public class RMISortingServer extends UnicastRemoteObject implements RMISortingS
     }
 
     public static void main(String[] args) {
+        int serverPort = Integer.parseInt(args[0]);
+
         if (System.getSecurityManager() == null) {
             System.setSecurityManager(new SecurityManager());
         }
 
         try {
-            Registry registry = LocateRegistry.createRegistry(8000);
+            Registry registry = LocateRegistry.createRegistry(serverPort);
             RMISortingService service = new RMISortingServer();
             registry.bind(SERVICE_NAME, service);
         } catch (Exception exception) {

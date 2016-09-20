@@ -1,5 +1,6 @@
 package com.stephengoeddel.distributedSorting;
 
+import com.stephengoeddel.distributedSorting.messages.SortedNumberConsumer;
 import com.stephengoeddel.distributedSorting.sorters.RemoteSorter;
 import com.stephengoeddel.distributedSorting.sorters.SimpleSorter;
 import com.stephengoeddel.distributedSorting.sorters.Sorter;
@@ -11,7 +12,7 @@ import java.util.concurrent.ThreadLocalRandom;
 public class Driver {
     private static String UNSORTED_NUMBERS_FILENAME = "unsorted-numbers.txt";
     private static String SORTED_NUMBERS_FILENAME = "sorted-numbers.txt";
-    private static String SERVER_ADDRESS = "127.0.0.1";
+    public static String SERVER_ADDRESS = "127.0.0.1";
 
     public static void main(String[] args) throws IOException {
         boolean generateFile = args[0] != null ? Boolean.valueOf(args[0]) : true;
@@ -20,10 +21,15 @@ public class Driver {
         final int numberOfThreadsOrPorts = args[3] != null ? Integer.parseInt(args[3]) : 3;
 
         List<Integer> serverPorts = new ArrayList<>();
-        if (procedure != Procedure.threads) {
+        if (procedure == Procedure.threads || procedure == Procedure.rmi) {
             List<Object> argList = Arrays.asList(args);
             for (Object arg : argList.subList(4, argList.size())) {
                 serverPorts.add(Integer.parseInt(arg.toString()));
+            }
+        } else if (procedure == Procedure.messages) {
+            // All ports will be the same in the Message Queue
+            for (int i = 0; i < numberOfThreadsOrPorts; i++) {
+                serverPorts.add(Integer.parseInt(args[4]));
             }
         }
 
@@ -49,7 +55,16 @@ public class Driver {
             List<List<Integer>> sortedSubLists = new ArrayList<>();
             for (Thread thread : threads.keySet()) {
                 thread.join();
-                sortedSubLists.add(threads.get(thread).getNumbers());
+                if (procedure != Procedure.messages) {
+                    sortedSubLists.add(threads.get(thread).getNumbers());
+                } else {
+                    // A Pseudo multi-threaded approach to grabbing the sorted numbers back from the Queue
+                    SortedNumberConsumer sortedNumberConsumer = new SortedNumberConsumer(serverPorts.get(0));
+                    Thread sortedNumberConsumerThread = new Thread(sortedNumberConsumer);
+                    sortedNumberConsumerThread.start();
+                    sortedNumberConsumerThread.join();
+                    sortedSubLists.add(sortedNumberConsumer.getNumbers());
+                }
             }
 
             mergeResult = mergeSort(sortedSubLists);
@@ -119,6 +134,8 @@ public class Driver {
                     sorter = RemoteSorter.forSockets(subList, SERVER_ADDRESS, serverPort);
                 } else if (procedure == Procedure.rmi) {
                     sorter = RemoteSorter.forRMI(subList, SERVER_ADDRESS, serverPort);
+                } else if (procedure == Procedure.messages) {
+                    sorter = RemoteSorter.forMessages(subList, SERVER_ADDRESS, serverPort);
                 } else {
                     throw new IllegalArgumentException("Procedure: " + procedure.name() + " is not valid for sortingRemotely");
                 }
@@ -202,5 +219,9 @@ public class Driver {
 
     private static boolean hasGoneThroughList(int currentIndex, List<Integer> list) {
         return currentIndex >= list.size();
+    }
+
+    private static void populateSortedNumbersFromQueue(List<List<Integer>> sortedSubLists) {
+
     }
 }

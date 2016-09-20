@@ -16,6 +16,10 @@ public abstract class RemoteSorter implements Sorter {
         return new RMISorter(numbers, serverAddress, serverPort);
     }
 
+    public static RemoteSorter forMessages(List<Integer> numbers, String serverAddress, int serverPort) {
+        return new MessageSorter(numbers, serverAddress, serverPort);
+    }
+
     RemoteSorter(List<Integer> numbers, String serverAddress, int serverPort) {
         this.numbers = numbers;
         this.serverAddress = serverAddress;

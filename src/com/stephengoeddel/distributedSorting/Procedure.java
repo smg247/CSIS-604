@@ -4,5 +4,5 @@ enum Procedure {
     threads,
     sockets,
     rmi,
-    messageQueue
+    messages
 }
