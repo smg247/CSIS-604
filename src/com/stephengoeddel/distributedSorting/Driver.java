@@ -55,16 +55,7 @@ public class Driver {
             List<List<Integer>> sortedSubLists = new ArrayList<>();
             for (Thread thread : threads.keySet()) {
                 thread.join();
-                if (procedure != Procedure.messages) {
-                    sortedSubLists.add(threads.get(thread).getNumbers());
-                } else {
-                    // A Pseudo multi-threaded approach to grabbing the sorted numbers back from the Queue
-                    SortedNumberConsumer sortedNumberConsumer = new SortedNumberConsumer(serverPorts.get(0));
-                    Thread sortedNumberConsumerThread = new Thread(sortedNumberConsumer);
-                    sortedNumberConsumerThread.start();
-                    sortedNumberConsumerThread.join();
-                    sortedSubLists.add(sortedNumberConsumer.getNumbers());
-                }
+                sortedSubLists.add(threads.get(thread).getNumbers());
             }
 
             mergeResult = mergeSort(sortedSubLists);
