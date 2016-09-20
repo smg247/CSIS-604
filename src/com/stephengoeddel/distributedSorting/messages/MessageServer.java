@@ -36,16 +36,19 @@ public class MessageServer {
 
         @Override
         public void run() {
+            Connection connection = null;
+            Session session = null;
+            MessageConsumer consumer = null;
             try {
                 ActiveMQConnectionFactory activeMQConnectionFactory = new ActiveMQConnectionFactory("tcp://" + Driver.SERVER_ADDRESS + ":" + serverPort);
-                Connection connection = activeMQConnectionFactory.createConnection();
+                connection = activeMQConnectionFactory.createConnection();
                 connection.start();
                 connection.setExceptionListener(this);
 
-                Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+                session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
                 Queue unsortedQueue = session.createQueue("Unsorted");
 
-                MessageConsumer consumer = session.createConsumer(unsortedQueue);
+                consumer = session.createConsumer(unsortedQueue);
                 Message message = consumer.receive(100000);
                 if (message instanceof TextMessage) {
                     TextMessage textMessage = (TextMessage) message;
@@ -64,13 +67,17 @@ public class MessageServer {
                     System.out.println("Received wrong type of message: " + message.getClass());
                 }
 
-
-                consumer.close();
-                session.close();
-                connection.close();
-
             } catch (Exception e) {
                 System.out.println("Exception in the ActiveMQConsumer: " + e.getMessage());
+            } finally {
+                try {
+                    consumer.close();
+                    session.close();
+                    connection.close();
+                } catch (Exception e) {
+                    System.out.println("Can't properly close connection to queue, exiting...");
+                    System.exit(1);
+                }
             }
         }
 
