@@ -1,2 +1,0 @@
-#!/usr/bin/env bash
-mvn exec:exec -Dexec.executable="java -Djava.security.policy=rmi.policy -Djava.rmi.server.hostname=127.0.0.1" -Dexec.mainClass="com.stephengoeddel.distributedSorting.rmi.RMISortingServer" -Dexec.args="8000"
