@@ -13,11 +13,12 @@ import java.util.List;
 public class MessageServer {
 
     public static void main(String[] args) {
-        int serverPort = Integer.parseInt(args[0]);
+        String serverAddress = args[0];
+        int serverPort = Integer.parseInt(args[1]);
 
         try {
             while (true) {
-                Thread thread = new Thread(new SortingMessageConsumer(serverPort));
+                Thread thread = new Thread(new SortingMessageConsumer(serverAddress, serverPort));
                 thread.start();
                 thread.join();
             }
@@ -28,9 +29,11 @@ public class MessageServer {
     }
 
     static class SortingMessageConsumer implements Runnable {
+        private final String serverAddress;
         private final int serverPort;
 
-        SortingMessageConsumer(int serverPort) {
+        SortingMessageConsumer(String serverAddress, int serverPort) {
+            this.serverAddress = serverAddress;
             this.serverPort = serverPort;
         }
 
@@ -40,7 +43,7 @@ public class MessageServer {
             Session session = null;
             MessageConsumer consumer = null;
             try {
-                ActiveMQConnectionFactory activeMQConnectionFactory = new ActiveMQConnectionFactory("tcp://" + Driver.SERVER_ADDRESS + ":" + serverPort);
+                ActiveMQConnectionFactory activeMQConnectionFactory = new ActiveMQConnectionFactory("tcp://" + serverAddress + ":" + serverPort);
                 connection = activeMQConnectionFactory.createConnection();
                 connection.start();
 
