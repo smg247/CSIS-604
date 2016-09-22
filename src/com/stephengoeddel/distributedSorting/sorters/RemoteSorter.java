@@ -12,8 +12,8 @@ public abstract class RemoteSorter implements Sorter {
         return new SocketSorter(numbers, serverAddress, serverPort);
     }
 
-    public static RemoteSorter forRMI(List<Integer> numbers, String serverAddress, int serverPort) {
-        return new RMISorter(numbers, serverAddress, serverPort);
+    public static RemoteSorter forRMI(List<Integer> numbers, String serverAddress, int serverPort, int registryPort) {
+        return new RMISorter(numbers, serverAddress, serverPort, registryPort);
     }
 
     public static RemoteSorter forMessages(List<Integer> numbers, String serverAddress, int serverPort) {

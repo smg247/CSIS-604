@@ -23,10 +23,17 @@ public class Driver {
         final int numberOfThreadsOrPorts = args[3] != null ? Integer.parseInt(args[3]) : 3;
 
         List<Integer> serverPorts = new ArrayList<>();
+        List<Integer> registryPorts = new ArrayList<>();
         if (procedure == Procedure.threads || procedure == Procedure.rmi) {
             List<Object> argList = Arrays.asList(args);
-            for (Object arg : argList.subList(4, argList.size())) {
+            for (Object arg : argList.subList(4, 4 + numberOfThreadsOrPorts)) {
                 serverPorts.add(Integer.parseInt(arg.toString()));
+            }
+
+            if (procedure == Procedure.rmi) {
+                for (Object arg : argList.subList(4 + numberOfThreadsOrPorts, argList.size())) {
+                    registryPorts.add(Integer.parseInt(arg.toString()));
+                }
             }
         } else if (procedure == Procedure.messages) {
             // All ports will be the same in the Message Queue
@@ -51,7 +58,7 @@ public class Driver {
             if (procedure == Procedure.threads) {
                 threads = sortByThreads(subLists);
             } else {
-                threads = sortRemotely(subLists, serverPorts, procedure);
+                threads = sortRemotely(subLists, serverPorts, registryPorts, procedure);
             }
 
             List<List<Integer>> sortedSubLists = new ArrayList<>();
@@ -116,17 +123,18 @@ public class Driver {
         return threads;
     }
 
-    private static Map<Thread, Sorter> sortRemotely(List<List<Integer>> subLists, List<Integer> serverPorts, Procedure procedure) throws IOException {
+    private static Map<Thread, Sorter> sortRemotely(List<List<Integer>> subLists, List<Integer> serverPorts, List<Integer> registryPorts, Procedure procedure) throws IOException {
         if (subLists.size() == serverPorts.size()) {
             Map<Thread, Sorter> threads = new HashMap<>();
             for (int i = 0; i < subLists.size(); i++) {
                 List<Integer> subList = subLists.get(i);
                 int serverPort = serverPorts.get(i);
+                int registryPort = registryPorts.get(i);
                 Sorter sorter;
                 if (procedure == Procedure.sockets) {
                     sorter = RemoteSorter.forSockets(subList, SERVER_ADDRESS, serverPort);
                 } else if (procedure == Procedure.rmi) {
-                    sorter = RemoteSorter.forRMI(subList, SERVER_ADDRESS, serverPort);
+                    sorter = RemoteSorter.forRMI(subList, SERVER_ADDRESS, serverPort, registryPort);
                 } else if (procedure == Procedure.messages) {
                     sorter = RemoteSorter.forMessages(subList, SERVER_ADDRESS, serverPort);
                 } else {

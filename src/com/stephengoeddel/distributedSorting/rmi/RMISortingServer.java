@@ -23,7 +23,8 @@ public class RMISortingServer implements RMISortingService {
     }
 
     public static void main(String[] args) {
-        int serverSuffix = Integer.parseInt(args[0]);
+        int objectPort = Integer.parseInt(args[0]);
+        int registryPort = Integer.parseInt(args[1]);
 
         if (System.getSecurityManager() == null) {
             System.setSecurityManager(new SecurityManager());
@@ -31,17 +32,17 @@ public class RMISortingServer implements RMISortingService {
 
         try {
             try {
-                registry = LocateRegistry.createRegistry(40000);
-                System.out.println(SERVICE_NAME + serverSuffix + " created registry");
+                registry = LocateRegistry.createRegistry(registryPort);
+                System.out.println(SERVICE_NAME + " created registry");
             } catch (Exception ignore) {
                 // The registry must already exist
-                registry = LocateRegistry.getRegistry(40000);
-                System.out.println(SERVICE_NAME + serverSuffix + " found existing registry");
+                registry = LocateRegistry.getRegistry(registryPort);
+                System.out.println(SERVICE_NAME + " found existing registry");
             }
 
-            RMISortingService service = (RMISortingService) exportObject(new RMISortingServer(), serverSuffix);
-            registry.rebind(SERVICE_NAME + serverSuffix, service);
-            System.out.println(SERVICE_NAME + serverSuffix + " bound sort method");
+            RMISortingService service = (RMISortingService) exportObject(new RMISortingServer(), objectPort);
+            registry.rebind(SERVICE_NAME, service);
+            System.out.println(SERVICE_NAME + " bound sort method");
             while(true) {
                 // Keep the server from exiting on its own
             }
