@@ -31,11 +31,11 @@ public class RMISortingServer implements RMISortingService {
         try {
             Registry registry;
             try {
-                registry = LocateRegistry.createRegistry(1099);
+                registry = LocateRegistry.createRegistry(40000);
                 System.out.println(SERVICE_NAME + serverSuffix + " created registry");
             } catch (Exception ignore) {
                 // The registry must already exist
-                registry = LocateRegistry.getRegistry(1099);
+                registry = LocateRegistry.getRegistry(40000);
                 System.out.println(SERVICE_NAME + serverSuffix + " found existing registry");
             }
 

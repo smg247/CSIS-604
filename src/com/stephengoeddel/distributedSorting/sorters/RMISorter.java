@@ -1,7 +1,6 @@
 package com.stephengoeddel.distributedSorting.sorters;
 
 
-import com.stephengoeddel.distributedSorting.Driver;
 import com.stephengoeddel.distributedSorting.rmi.RMISortingService;
 
 import java.rmi.registry.LocateRegistry;
@@ -17,7 +16,7 @@ class RMISorter extends RemoteSorter {
     @Override
     public void run() {
         try {
-            Registry registry = LocateRegistry.getRegistry(Driver.SERVER_ADDRESS, 1099);
+            Registry registry = LocateRegistry.getRegistry(40000);
             RMISortingService rmiSortingService = (RMISortingService) registry.lookup(RMISortingService.SERVICE_NAME + serverPort);
             numbers = rmiSortingService.sort(numbers);
         } catch (Exception e) {
