@@ -3,11 +3,12 @@ package com.stephengoeddel.distributedSorting.rmi;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.rmi.server.UnicastRemoteObject;
 import java.util.Collections;
 import java.util.List;
 
-public class RMISortingServer extends UnicastRemoteObject implements RMISortingService {
+import static java.rmi.server.UnicastRemoteObject.exportObject;
+
+public class RMISortingServer implements RMISortingService {
 
     public RMISortingServer() throws RemoteException {
         super();
@@ -38,8 +39,8 @@ public class RMISortingServer extends UnicastRemoteObject implements RMISortingS
                 System.out.println(SERVICE_NAME + serverSuffix + " found existing registry");
             }
 
-            RMISortingService service = new RMISortingServer();
-            registry.bind(SERVICE_NAME + serverSuffix, service);
+            RMISortingService service = (RMISortingService) exportObject(new RMISortingServer(), 0);
+            registry.rebind(SERVICE_NAME + serverSuffix, service);
             System.out.println(SERVICE_NAME + serverSuffix + " bound sort method");
         } catch (Exception exception) {
             System.out.println("Exception while creating and binding the RMISortingServer: " + exception.getMessage());
