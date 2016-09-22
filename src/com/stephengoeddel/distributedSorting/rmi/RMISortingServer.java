@@ -9,6 +9,7 @@ import java.util.List;
 import static java.rmi.server.UnicastRemoteObject.exportObject;
 
 public class RMISortingServer implements RMISortingService {
+    static Registry registry;
 
     public RMISortingServer() throws RemoteException {
         super();
@@ -29,7 +30,6 @@ public class RMISortingServer implements RMISortingService {
         }
 
         try {
-            Registry registry;
             try {
                 registry = LocateRegistry.createRegistry(40000);
                 System.out.println(SERVICE_NAME + serverSuffix + " created registry");
@@ -42,6 +42,9 @@ public class RMISortingServer implements RMISortingService {
             RMISortingService service = (RMISortingService) exportObject(new RMISortingServer(), 0);
             registry.rebind(SERVICE_NAME + serverSuffix, service);
             System.out.println(SERVICE_NAME + serverSuffix + " bound sort method");
+            while(true) {
+                // Keep the server from exiting on its own
+            }
         } catch (Exception exception) {
             System.out.println("Exception while creating and binding the RMISortingServer: " + exception.getMessage());
         }
