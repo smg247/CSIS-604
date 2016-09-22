@@ -39,7 +39,7 @@ public class RMISortingServer implements RMISortingService {
                 System.out.println(SERVICE_NAME + serverSuffix + " found existing registry");
             }
 
-            RMISortingService service = (RMISortingService) exportObject(new RMISortingServer(), 0);
+            RMISortingService service = (RMISortingService) exportObject(new RMISortingServer(), serverSuffix);
             registry.rebind(SERVICE_NAME + serverSuffix, service);
             System.out.println(SERVICE_NAME + serverSuffix + " bound sort method");
             while(true) {
