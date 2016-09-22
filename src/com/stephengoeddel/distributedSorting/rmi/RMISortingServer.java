@@ -21,16 +21,25 @@ public class RMISortingServer extends UnicastRemoteObject implements RMISortingS
     }
 
     public static void main(String[] args) {
-        int serverPort = Integer.parseInt(args[0]);
+        String serverAddress = args[0];
+        int serverSuffix = Integer.parseInt(args[1]);
 
         if (System.getSecurityManager() == null) {
             System.setSecurityManager(new SecurityManager());
         }
 
         try {
-            Registry registry = LocateRegistry.createRegistry(serverPort);
+            try {
+                LocateRegistry.createRegistry(1099);
+            } catch (Exception ignore) {
+                // The registry must be created already, ignore
+            }
+
+            Registry registry = LocateRegistry.getRegistry(serverAddress);
+            System.out.println(SERVICE_NAME + serverSuffix + " found registry");
             RMISortingService service = new RMISortingServer();
-            registry.bind(SERVICE_NAME, service);
+            registry.bind(SERVICE_NAME + serverSuffix, service);
+            System.out.println(SERVICE_NAME + serverSuffix + " bound sort method");
         } catch (Exception exception) {
             System.out.println("Exception while creating and binding the RMISortingServer: " + exception.getMessage());
         }
