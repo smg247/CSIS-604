@@ -86,27 +86,33 @@ class Node {
     private void sendMessage(String messageHeader, List<String> currentNodesInMessage) {
         NodeRepresentation successor = determineSuccessor(thisNode.getName());
         while (successor != null) {
-            try {
-                Socket socket = new Socket(successor.getHost(), successor.getPort());
-                PrintWriter printWriter = new PrintWriter(socket.getOutputStream(), true);
+            if (successor.equals(thisNode)) {
+                System.out.println(thisNode.getName() + " has determined that it is the only active node in the ring and is setting itself as the coordinator.");
+                coordinatorNode = successor;
+                break;
+            } else {
+                try {
+                    Socket socket = new Socket(successor.getHost(), successor.getPort());
+                    PrintWriter printWriter = new PrintWriter(socket.getOutputStream(), true);
 
-                printWriter.println(messageHeader);
-                if (COORDINATOR.equals(messageHeader)) {
-                    printWriter.println(coordinatorNode.getName());
+                    printWriter.println(messageHeader);
+                    if (COORDINATOR.equals(messageHeader)) {
+                        printWriter.println(coordinatorNode.getName());
+                    }
+
+                    for (String nodeInMessage : currentNodesInMessage) {
+                        printWriter.println(nodeInMessage);
+                    }
+                    printWriter.println(thisNode.getName());
+                    printWriter.println(".");
+
+                    socket.close();
+                    successor = null;
+                } catch (IOException e) {
+                    System.out.print(successor.getName() + " is down " + thisNode.getName() + "'s new successor is ");
+                    successor = determineSuccessor(successor.getName());
+                    System.out.println(successor.getName());
                 }
-
-                for (String nodeInMessage : currentNodesInMessage) {
-                    printWriter.println(nodeInMessage);
-                }
-                printWriter.println(thisNode.getName());
-                printWriter.println(".");
-
-                socket.close();
-                successor = null;
-            } catch (IOException e) {
-                System.out.print(successor.getName() +  " is down " + thisNode.getName() + "'s new successor is ");
-                successor = determineSuccessor(successor.getName());
-                System.out.println(successor.getName());
             }
         }
     }
@@ -116,17 +122,9 @@ class Node {
             String node = nodesInRing.get(i).getName();
             if (node.equals(checkFromNodeName)) {
                 if (i == nodesInRing.size() - 1) {
-                    if (!nodesInRing.get(0).getName().equals(thisNode.getName())) {
-                        return nodesInRing.get(0);
-                    } else {
-                        return determineSuccessor(thisNode.getName());
-                    }
+                    return nodesInRing.get(0);
                 } else {
-                    if (!nodesInRing.get(i + 1).getName().equals(thisNode.getName())) {
-                        return nodesInRing.get(i + 1);
-                    } else {
-                        return determineSuccessor(thisNode.getName());
-                    }
+                    return nodesInRing.get(i + 1);
                 }
             }
         }
