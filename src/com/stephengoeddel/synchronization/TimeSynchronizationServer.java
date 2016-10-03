@@ -28,7 +28,7 @@ class TimeSynchronizationServer implements Runnable {
                     if (MessageType.timePoll.getHeader().equals(header)) {
                         PrintWriter printWriter = new PrintWriter(socket.getOutputStream(), true);
                         printWriter.println(MessageType.timeResponse.getHeader());
-                        printWriter.println(System.currentTimeMillis() + node.getTimeOffset());
+                        printWriter.println(node.getTimeWithOffsetIncluded());
                         printWriter.println(".");
                     } else if (MessageType.timeOffset.getHeader().equals(header)) {
                         long offset = Long.valueOf(inputReader.readLine());

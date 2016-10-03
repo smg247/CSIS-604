@@ -145,7 +145,7 @@ class Node {
     void pollOtherNodesForTimeAndNotifyOffsets() {
         Map<NodeRepresentation, Long> timeFromNodes = new HashMap<>();
         for (NodeRepresentation node : nodesInRing) {
-            long startTime = System.currentTimeMillis();
+            long startTime = getTimeWithOffsetIncluded();
             if (node.equals(thisNode)) {
                 timeFromNodes.put(node, startTime);
             } else {
@@ -160,7 +160,7 @@ class Node {
 
                     String line = inputReader.readLine();
                     if (MessageType.timeResponse.getHeader().equals(line)) {
-                        long endTime = System.currentTimeMillis();
+                        long endTime = getTimeWithOffsetIncluded();
                         long timeFromNode = Long.valueOf(inputReader.readLine());
                         long roundTripTime = endTime - startTime;
                         timeFromNodes.put(node, timeFromNode - (roundTripTime/2));
@@ -206,12 +206,12 @@ class Node {
         }
     }
 
-    void setTimeOffset(long timeOffset) {
-        this.timeOffset = timeOffset;
+    long getTimeWithOffsetIncluded() {
+        return System.currentTimeMillis() + timeOffset;
     }
 
-    long getTimeOffset() {
-        return timeOffset;
+    void setTimeOffset(long timeOffset) {
+        this.timeOffset = timeOffset;
     }
 
     boolean isCoordinator() {
