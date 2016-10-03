@@ -33,7 +33,7 @@ class TimeSynchronizationServer implements Runnable {
                     } else if (MessageType.timeOffset.getHeader().equals(header)) {
                         long offset = Long.valueOf(inputReader.readLine());
                         System.out.println(node.getName() + " has received an updated time offset of " + offset);
-                        node.setTimeOffset(offset);
+                        node.updateTimeOffset(offset);
                     } else {
                         System.out.println("Received malformed time polling message with header: " + header);
                         System.exit(1);

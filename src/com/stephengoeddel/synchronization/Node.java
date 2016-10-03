@@ -207,8 +207,8 @@ class Node {
         return System.currentTimeMillis() + timeOffset;
     }
 
-    void setTimeOffset(long timeOffset) {
-        this.timeOffset = timeOffset;
+    void updateTimeOffset(long timeOffsetChange) {
+        timeOffset += timeOffsetChange;
     }
 
     boolean isCoordinator() {
