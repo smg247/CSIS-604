@@ -196,7 +196,7 @@ class Node {
                     Socket socket = new Socket(node.getHost(), node.getTimePollingPort());
                     PrintWriter printWriter = new PrintWriter(socket.getOutputStream(), true);
                     printWriter.println(MessageType.timeOffset.getHeader());
-                    printWriter.println(timeOffset);
+                    printWriter.println(offsetForNode);
                     printWriter.println(".");
                     socket.close();
                 } catch (Exception ignore) {
