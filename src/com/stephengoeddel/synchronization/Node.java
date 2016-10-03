@@ -36,6 +36,7 @@ class Node {
     private Node(NodeRepresentation thisNode, List<NodeRepresentation> nodesInRing) {
         this.thisNode = thisNode;
         this.nodesInRing = nodesInRing;
+        timeOffset = 0;
     }
 
     void sendElectionMessage() {
@@ -162,13 +163,13 @@ class Node {
                         long endTime = System.currentTimeMillis();
                         long timeFromNode = Long.valueOf(inputReader.readLine());
                         long roundTripTime = endTime - startTime;
-                        timeFromNodes.put(node, timeFromNode + roundTripTime);
+                        timeFromNodes.put(node, timeFromNode + (roundTripTime/2));
                     } else {
                         System.out.println("Received message with a header of: " + line + " which was unexpected");
                     }
                     socket.close();
                 } catch (Exception ignore) {
-                    System.out.println(thisNode.getName() + " attempted to poll " + node.getName() + " for it's time, but it was down.");
+                    System.out.println(thisNode.getName() + " attempted to poll " + node.getName() + " for it's time, but it was unavailable.");
                 }
             }
         }
@@ -206,6 +207,10 @@ class Node {
 
     void setTimeOffset(long timeOffset) {
         this.timeOffset = timeOffset;
+    }
+
+    long getTimeOffset() {
+        return timeOffset;
     }
 
     boolean isCoordinator() {

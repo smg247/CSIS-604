@@ -54,6 +54,7 @@ class ElectionServer implements Runnable {
 
                 } finally {
                     System.out.println("Closing socket for " + node.getName());
+                    socket.close();
                 }
             }
         } catch(Exception e) {

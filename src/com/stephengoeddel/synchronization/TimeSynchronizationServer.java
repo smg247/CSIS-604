@@ -28,7 +28,7 @@ class TimeSynchronizationServer implements Runnable {
                     if (MessageType.timePoll.getHeader().equals(header)) {
                         PrintWriter printWriter = new PrintWriter(socket.getOutputStream(), true);
                         printWriter.println(MessageType.timeResponse.getHeader());
-                        printWriter.println(System.currentTimeMillis());
+                        printWriter.println(System.currentTimeMillis() + node.getTimeOffset());
                         printWriter.println(".");
                     } else if (MessageType.timeOffset.getHeader().equals(header)) {
                         long offset = Long.valueOf(inputReader.readLine());
@@ -38,13 +38,12 @@ class TimeSynchronizationServer implements Runnable {
                         System.out.println("Received malformed time polling message with header: " + header);
                         System.exit(1);
                     }
-
-                    socket.close();
                 } catch (Exception ignore) {
                     System.out.println(node.getName() + " noticed that the coordinator was down while trying to respond to a time polling message, going to request a new election.");
                     node.sendElectionMessage();
                 } finally {
                     System.out.println("Closing socket for " + node.getName());
+                    socket.close();
                 }
             }
         } catch(Exception e) {
