@@ -163,7 +163,7 @@ class Node {
                         long endTime = System.currentTimeMillis();
                         long timeFromNode = Long.valueOf(inputReader.readLine());
                         long roundTripTime = endTime - startTime;
-                        timeFromNodes.put(node, timeFromNode + (roundTripTime/2));
+                        timeFromNodes.put(node, timeFromNode - (roundTripTime/2));
                     } else {
                         System.out.println("Received message with a header of: " + line + " which was unexpected");
                     }
@@ -192,6 +192,7 @@ class Node {
                 System.out.println(thisNode.getName() + " is setting it's own offset to " + timeOffset);
             } else {
                 try {
+                    System.out.println("Computed " + node.getName() + "'s time to be " + + timeFromNodes.get(node) + " making its offset " + offsetForNode);
                     Socket socket = new Socket(node.getHost(), node.getTimePollingPort());
                     PrintWriter printWriter = new PrintWriter(socket.getOutputStream(), true);
                     printWriter.println(MessageType.timeOffset.getHeader());
