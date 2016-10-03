@@ -145,9 +145,8 @@ class Node {
     void pollOtherNodesForTimeAndNotifyOffsets() {
         Map<NodeRepresentation, Long> timeFromNodes = new HashMap<>();
         for (NodeRepresentation node : nodesInRing) {
-            long startTime = getTimeWithOffsetIncluded();
             if (node.equals(thisNode)) {
-                timeFromNodes.put(node, startTime);
+                timeFromNodes.put(node, getTimeWithOffsetIncluded());
             } else {
                 try {
                     Socket socket = new Socket(node.getHost(), node.getTimePollingPort());
@@ -160,10 +159,8 @@ class Node {
 
                     String line = inputReader.readLine();
                     if (MessageType.timeResponse.getHeader().equals(line)) {
-                        long endTime = getTimeWithOffsetIncluded();
                         long timeFromNode = Long.valueOf(inputReader.readLine());
-                        long roundTripTime = endTime - startTime;
-                        timeFromNodes.put(node, timeFromNode - (roundTripTime/2));
+                        timeFromNodes.put(node, timeFromNode);
                     } else {
                         System.out.println("Received message with a header of: " + line + " which was unexpected");
                     }
