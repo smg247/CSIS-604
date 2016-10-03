@@ -149,6 +149,7 @@ class Node {
                 timeFromNodes.put(node, getTimeWithOffsetIncluded());
             } else {
                 try {
+                    long startTime = getTimeWithOffsetIncluded();
                     Socket socket = new Socket(node.getHost(), node.getTimePollingPort());
                     PrintWriter printWriter = new PrintWriter(socket.getOutputStream(), true);
                     BufferedReader inputReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -158,9 +159,11 @@ class Node {
                     printWriter.println(".");
 
                     String line = inputReader.readLine();
+                    long endTime = getTimeWithOffsetIncluded();
+                    long roundTripTime = endTime - startTime;
                     if (MessageType.timeResponse.getHeader().equals(line)) {
                         long timeFromNode = Long.valueOf(inputReader.readLine());
-                        timeFromNodes.put(node, timeFromNode);
+                        timeFromNodes.put(node, timeFromNode + (roundTripTime/2));
                     } else {
                         System.out.println("Received message with a header of: " + line + " which was unexpected");
                     }
