@@ -41,34 +41,31 @@ public class NodeServer {
                 try {
                     BufferedReader inputReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-                    String messageType = null;
+                    MessageType messageType;
                     String coordinator = null;
                     List<String> nodes = new ArrayList<>();
-                    String line;
-                    while ((line = inputReader.readLine()) != null && !".".equals(line)) {
-                        if (line.equals(Node.COORDINATOR) || line.equals(Node.ELECTION)) {
-                            messageType = line;
-                            if (messageType.equals(Node.COORDINATOR)) {
-                                // The coordinator will be the first line after the message type
-                                coordinator = inputReader.readLine();
-                            }
-                        } else {
+                    String line = inputReader.readLine();
+                    messageType = MessageType.fromHeader(line);
+                    if (MessageType.coordinator.equals(messageType)) {
+                        // The coordinator will be the first line after the message type
+                        coordinator = inputReader.readLine();
+                    }
+                    if (MessageType.coordinator.equals(messageType) || MessageType.election.equals(messageType)) {
+                        while ((line = inputReader.readLine()) != null && !".".equals(line)) {
                             nodes.add(line);
                         }
                     }
 
                     if (messageType != null) {
                         System.out.println("Received a(n) " + messageType + " message with " + nodes.size() + " nodes");
-                        if (Node.COORDINATOR.equals(messageType)) {
+                        if (MessageType.coordinator.equals(messageType)) {
                             node.handleIncomingCoordinationMessage(coordinator, nodes);
-                        } else if (Node.ELECTION.equals(messageType)) {
+                        } else if (MessageType.election.equals(messageType)) {
                             node.handleIncomingElectionMessage(nodes);
-                        } else {
-                            System.out.println("Malformed messageType.");
-                            System.exit(1);
                         }
                     } else {
-                        System.out.println("Received a simple ping.");
+                        System.out.println("Malformed messageType.");
+                        System.exit(1);
                     }
 
                 } finally {

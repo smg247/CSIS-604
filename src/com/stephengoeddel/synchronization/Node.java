@@ -8,9 +8,6 @@ import java.util.Collections;
 import java.util.List;
 
 class Node {
-    static final String ELECTION = "ELECTION";
-    static final String COORDINATOR = "COORDINATOR";
-
     private NodeRepresentation thisNode;
     private List<NodeRepresentation> nodesInRing;
     private NodeRepresentation coordinatorNode;
@@ -42,7 +39,7 @@ class Node {
 
     void sendElectionMessage() {
         System.out.println(thisNode.getName() + " is requesting a new election.");
-        sendMessage(ELECTION, new ArrayList<>());
+        sendMessage(MessageType.election, new ArrayList<>());
     }
 
     void handleIncomingElectionMessage(List<String> nodes) {
@@ -51,10 +48,10 @@ class Node {
         if (electionIsComplete) {
             coordinatorNode = determineCoordinatorNode(nodes);
             System.out.println(thisNode.getName() + " has determined the new Coordinator to be " + coordinatorNode.getName() + " and is sending a new coordinator message.");
-            sendMessage(COORDINATOR, new ArrayList<>());
+            sendMessage(MessageType.coordinator, new ArrayList<>());
         } else {
             System.out.println(thisNode.getName() + " is forwarding along an election message");
-            sendMessage(ELECTION, nodes);
+            sendMessage(MessageType.election, nodes);
         }
     }
 
@@ -63,7 +60,7 @@ class Node {
         System.out.println(thisNode.getName() + " has updated its coordinator to " + coordinatorNode.getName());
         boolean coordinationIsComplete = nodes.contains(thisNode.getName());
         if (!coordinationIsComplete) {
-            sendMessage(COORDINATOR, nodes);
+            sendMessage(MessageType.coordinator, nodes);
         }
     }
 
@@ -72,6 +69,7 @@ class Node {
             try {
                 Socket socket = new Socket(coordinatorNode.getHost(), coordinatorNode.getPort());
                 PrintWriter printWriter = new PrintWriter(socket.getOutputStream(), true);
+                printWriter.println(MessageType.ping.getHeader());
                 printWriter.println(".");
                 socket.close();
                 return true;
@@ -83,7 +81,7 @@ class Node {
         return true;
     }
 
-    private void sendMessage(String messageHeader, List<String> currentNodesInMessage) {
+    private void sendMessage(MessageType messageType, List<String> currentNodesInMessage) {
         NodeRepresentation successor = determineSuccessor(thisNode.getName());
         while (successor != null) {
             if (successor.equals(thisNode)) {
@@ -95,8 +93,8 @@ class Node {
                     Socket socket = new Socket(successor.getHost(), successor.getPort());
                     PrintWriter printWriter = new PrintWriter(socket.getOutputStream(), true);
 
-                    printWriter.println(messageHeader);
-                    if (COORDINATOR.equals(messageHeader)) {
+                    printWriter.println(messageType.getHeader());
+                    if (MessageType.coordinator == messageType) {
                         printWriter.println(coordinatorNode.getName());
                     }
 
