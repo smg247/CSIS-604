@@ -4,36 +4,43 @@ class NodeRepresentation implements Comparable<NodeRepresentation> {
     private static String PORT_DELIMITER = ":";
     private static String POSITION_DELIMITER = "-";
     private String host;
-    private int port;
+    private int electionPort;
+    private int timePollingPort;
     private int positionInRing;
 
 
-    public static NodeRepresentation fromName(String name) {
+    static NodeRepresentation fromName(String name) {
         int portDelimiter = name.indexOf(PORT_DELIMITER);
         int positionDelimiter = name.indexOf(POSITION_DELIMITER);
         String host = name.substring(0, portDelimiter);
-        int port = Integer.parseInt(name.substring(portDelimiter + 1, positionDelimiter));
+        int electionPort = Integer.parseInt(name.substring(portDelimiter + 1, positionDelimiter));
         int positionInRing = Integer.parseInt(name.substring(positionDelimiter + 1, name.length()));
-        return new NodeRepresentation(host, port, positionInRing);
+        return new NodeRepresentation(host, electionPort, positionInRing);
     }
 
 
-    NodeRepresentation(String host, int port, int positionInRing) {
+    NodeRepresentation(String host, int electionPort, int positionInRing) {
         this.host = host;
-        this.port = port;
+        this.electionPort = electionPort;
         this.positionInRing = positionInRing;
+
+        timePollingPort = electionPort + 1;
     }
 
     String getHost() {
         return host;
     }
 
-    int getPort() {
-        return port;
+    int getElectionPort() {
+        return electionPort;
+    }
+
+    int getTimePollingPort() {
+        return timePollingPort;
     }
 
     String getName() {
-        return host + PORT_DELIMITER + port + POSITION_DELIMITER + positionInRing;
+        return host + PORT_DELIMITER + electionPort + POSITION_DELIMITER + positionInRing;
     }
 
     @Override
@@ -52,7 +59,7 @@ class NodeRepresentation implements Comparable<NodeRepresentation> {
 
         NodeRepresentation that = (NodeRepresentation) o;
 
-        if (port != that.port) {
+        if (electionPort != that.electionPort) {
             return false;
         }
         if (positionInRing != that.positionInRing) {
@@ -65,7 +72,7 @@ class NodeRepresentation implements Comparable<NodeRepresentation> {
     @Override
     public int hashCode() {
         int result = host.hashCode();
-        result = 31 * result + port;
+        result = 31 * result + electionPort;
         result = 31 * result + positionInRing;
         return result;
     }

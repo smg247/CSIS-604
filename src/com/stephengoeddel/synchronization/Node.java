@@ -1,16 +1,17 @@
 package com.stephengoeddel.synchronization;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 class Node {
     private NodeRepresentation thisNode;
     private List<NodeRepresentation> nodesInRing;
     private NodeRepresentation coordinatorNode;
+    private long timeOffset;
 
 
     static Node createNode(List<String> hostsInRing, List<Integer> portsInRing, String host, int port) {
@@ -39,7 +40,7 @@ class Node {
 
     void sendElectionMessage() {
         System.out.println(thisNode.getName() + " is requesting a new election.");
-        sendMessage(MessageType.election, new ArrayList<>());
+        sendMessageIncludingNodes(MessageType.election, new ArrayList<>());
     }
 
     void handleIncomingElectionMessage(List<String> nodes) {
@@ -48,10 +49,10 @@ class Node {
         if (electionIsComplete) {
             coordinatorNode = determineCoordinatorNode(nodes);
             System.out.println(thisNode.getName() + " has determined the new Coordinator to be " + coordinatorNode.getName() + " and is sending a new coordinator message.");
-            sendMessage(MessageType.coordinator, new ArrayList<>());
+            sendMessageIncludingNodes(MessageType.coordinator, new ArrayList<>());
         } else {
             System.out.println(thisNode.getName() + " is forwarding along an election message");
-            sendMessage(MessageType.election, nodes);
+            sendMessageIncludingNodes(MessageType.election, nodes);
         }
     }
 
@@ -60,14 +61,14 @@ class Node {
         System.out.println(thisNode.getName() + " has updated its coordinator to " + coordinatorNode.getName());
         boolean coordinationIsComplete = nodes.contains(thisNode.getName());
         if (!coordinationIsComplete) {
-            sendMessage(MessageType.coordinator, nodes);
+            sendMessageIncludingNodes(MessageType.coordinator, nodes);
         }
     }
 
     boolean isCoordinatorActive() {
         if (!isCoordinator()) {
             try {
-                Socket socket = new Socket(coordinatorNode.getHost(), coordinatorNode.getPort());
+                Socket socket = new Socket(coordinatorNode.getHost(), coordinatorNode.getElectionPort());
                 PrintWriter printWriter = new PrintWriter(socket.getOutputStream(), true);
                 printWriter.println(MessageType.ping.getHeader());
                 printWriter.println(".");
@@ -81,7 +82,7 @@ class Node {
         return true;
     }
 
-    private void sendMessage(MessageType messageType, List<String> currentNodesInMessage) {
+    private void sendMessageIncludingNodes(MessageType messageType, List<String> currentNodesInMessage) {
         NodeRepresentation successor = determineSuccessor(thisNode.getName());
         while (successor != null) {
             if (successor.equals(thisNode)) {
@@ -90,7 +91,7 @@ class Node {
                 break;
             } else {
                 try {
-                    Socket socket = new Socket(successor.getHost(), successor.getPort());
+                    Socket socket = new Socket(successor.getHost(), successor.getElectionPort());
                     PrintWriter printWriter = new PrintWriter(socket.getOutputStream(), true);
 
                     printWriter.println(messageType.getHeader());
@@ -140,11 +141,86 @@ class Node {
         return nodeRepresentations.get(nodeRepresentations.size() - 1);
     }
 
-    private boolean isCoordinator() {
+    void pollOtherNodesForTimeAndNotifyOffsets() {
+        Map<NodeRepresentation, Long> timeFromNodes = new HashMap<>();
+        for (NodeRepresentation node : nodesInRing) {
+            long startTime = System.currentTimeMillis();
+            if (node.equals(thisNode)) {
+                timeFromNodes.put(node, startTime);
+            } else {
+                try {
+                    Socket socket = new Socket(node.getHost(), node.getTimePollingPort());
+                    PrintWriter printWriter = new PrintWriter(socket.getOutputStream(), true);
+                    BufferedReader inputReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+
+
+                    printWriter.println(MessageType.timePoll.getHeader());
+                    printWriter.println(".");
+
+                    String line = inputReader.readLine();
+                    if (MessageType.timeResponse.getHeader().equals(line)) {
+                        long endTime = System.currentTimeMillis();
+                        long timeFromNode = Long.valueOf(inputReader.readLine());
+                        long roundTripTime = endTime - startTime;
+                        timeFromNodes.put(node, timeFromNode + roundTripTime);
+                    } else {
+                        System.out.println("Received message with a header of: " + line + " which was unexpected");
+                    }
+                    socket.close();
+                } catch (Exception ignore) {
+                    System.out.println(thisNode.getName() + " attempted to poll " + node.getName() + " for it's time, but it was down.");
+                }
+            }
+        }
+
+        long averageTime = 0;
+        for (long time : timeFromNodes.values()) {
+            averageTime += time;
+        }
+
+        averageTime = averageTime/timeFromNodes.size();
+        System.out.println(thisNode.getName() + " computed the average time to be " + averageTime);
+        notifyNodesOfOffsets(averageTime, timeFromNodes);
+    }
+
+    private void notifyNodesOfOffsets(long averageTime, Map<NodeRepresentation, Long> timeFromNodes) {
+        for (NodeRepresentation node : timeFromNodes.keySet()) {
+            long offsetForNode = averageTime - timeFromNodes.get(node);
+            if (node.equals(thisNode)) {
+                timeOffset = offsetForNode;
+                System.out.println(thisNode.getName() + " is setting it's own offset to " + timeOffset);
+            } else {
+                try {
+                    Socket socket = new Socket(node.getHost(), node.getTimePollingPort());
+                    PrintWriter printWriter = new PrintWriter(socket.getOutputStream(), true);
+                    printWriter.println(MessageType.timeOffset.getHeader());
+                    printWriter.println(timeOffset);
+                    printWriter.println(".");
+                    socket.close();
+                } catch (Exception ignore) {
+                    System.out.println(thisNode.getName() + " attempted to send " + node.getName() + " it's time offset, but it was down.");
+                }
+            }
+        }
+    }
+
+    void setTimeOffset(long timeOffset) {
+        this.timeOffset = timeOffset;
+    }
+
+    boolean isCoordinator() {
         return thisNode.equals(coordinatorNode);
     }
 
     String getName() {
         return thisNode.getName();
+    }
+
+    int getElectionPort() {
+        return thisNode.getElectionPort();
+    }
+
+    int getTimePollingPort() {
+        return thisNode.getTimePollingPort();
     }
 }

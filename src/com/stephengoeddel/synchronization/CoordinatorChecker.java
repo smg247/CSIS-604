@@ -1,11 +1,11 @@
 package com.stephengoeddel.synchronization;
 
 
-class CoordinatorCaller implements Runnable {
+class CoordinatorChecker implements Runnable {
     private Node node;
 
 
-    CoordinatorCaller(Node node) {
+    CoordinatorChecker(Node node) {
         this.node = node;
     }
 
@@ -20,7 +20,7 @@ class CoordinatorCaller implements Runnable {
             try {
                 Thread.sleep(10000);
             } catch (Exception e) {
-                System.out.println("CoordinatorCaller stopped.");
+                System.out.println("CoordinatorChecker stopped.");
                 System.exit(1);
             }
         }
