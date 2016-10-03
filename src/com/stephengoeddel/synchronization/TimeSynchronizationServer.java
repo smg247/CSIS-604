@@ -7,11 +7,11 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-public class TimeSynchronizationServer implements Runnable {
+class TimeSynchronizationServer implements Runnable {
     private Node node;
 
 
-    public TimeSynchronizationServer(Node node) {
+    TimeSynchronizationServer(Node node) {
         this.node = node;
     }
 
@@ -30,7 +30,6 @@ public class TimeSynchronizationServer implements Runnable {
                         printWriter.println(MessageType.timeResponse.getHeader());
                         printWriter.println(System.currentTimeMillis());
                         printWriter.println(".");
-                        socket.close();
                     } else if (MessageType.timeOffset.getHeader().equals(header)) {
                         long offset = Long.valueOf(inputReader.readLine());
                         System.out.println(node.getName() + " has received an updated time offset of " + offset);
@@ -39,6 +38,8 @@ public class TimeSynchronizationServer implements Runnable {
                         System.out.println("Received malformed time polling message with header: " + header);
                         System.exit(1);
                     }
+
+                    socket.close();
                 } catch (Exception ignore) {
                     System.out.println(node.getName() + " noticed that the coordinator was down while trying to respond to a time polling message, going to request a new election.");
                     node.sendElectionMessage();

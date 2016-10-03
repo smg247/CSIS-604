@@ -7,11 +7,11 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ElectionServer implements Runnable {
+class ElectionServer implements Runnable {
     private Node node;
 
 
-    public ElectionServer(Node node) {
+    ElectionServer(Node node) {
         this.node = node;
     }
 
