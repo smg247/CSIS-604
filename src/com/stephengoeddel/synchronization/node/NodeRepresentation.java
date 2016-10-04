@@ -1,4 +1,4 @@
-package com.stephengoeddel.synchronization;
+package com.stephengoeddel.synchronization.node;
 
 class NodeRepresentation implements Comparable<NodeRepresentation> {
     private static String ELECTION_PORT_DELIMITER = ":";

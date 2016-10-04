@@ -1,4 +1,6 @@
-package com.stephengoeddel.synchronization;
+package com.stephengoeddel.synchronization.node;
+
+import com.stephengoeddel.synchronization.enums.LockType;
 
 class LockAttempt implements Comparable<LockAttempt> {
     private NodeRepresentation nodeRepresentation;
@@ -41,15 +43,15 @@ class LockAttempt implements Comparable<LockAttempt> {
         return result;
     }
 
-    public NodeRepresentation getNodeRepresentation() {
+    NodeRepresentation getNodeRepresentation() {
         return nodeRepresentation;
     }
 
-    public long getTime() {
+    long getTime() {
         return time;
     }
 
-    public LockType getLockType() {
+    LockType getLockType() {
         return lockType;
     }
 }

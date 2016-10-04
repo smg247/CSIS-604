@@ -1,11 +1,15 @@
-package com.stephengoeddel.synchronization;
+package com.stephengoeddel.synchronization.processServers.fileLock;
 
 
-class FileReader implements Runnable {
+import com.stephengoeddel.synchronization.enums.LockAction;
+import com.stephengoeddel.synchronization.enums.LockType;
+import com.stephengoeddel.synchronization.node.Node;
+
+public class FileReader implements Runnable {
     private Node node;
 
 
-    FileReader(Node node) {
+    public FileReader(Node node) {
         this.node = node;
     }
 

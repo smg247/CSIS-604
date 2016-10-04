@@ -1,4 +1,7 @@
-package com.stephengoeddel.synchronization;
+package com.stephengoeddel.synchronization.processServers.election;
+
+import com.stephengoeddel.synchronization.enums.MessageType;
+import com.stephengoeddel.synchronization.node.Node;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -7,11 +10,11 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
-class ElectionServer implements Runnable {
+public class ElectionServer implements Runnable {
     private Node node;
 
 
-    ElectionServer(Node node) {
+    public ElectionServer(Node node) {
         this.node = node;
     }
 

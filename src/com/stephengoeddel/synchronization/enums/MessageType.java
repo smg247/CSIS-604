@@ -1,6 +1,6 @@
-package com.stephengoeddel.synchronization;
+package com.stephengoeddel.synchronization.enums;
 
-enum MessageType {
+public enum MessageType {
     election("ELECTION"),
     coordinator("COORDINATOR"),
     timePoll("TIME_POLL"),
@@ -14,7 +14,7 @@ enum MessageType {
     writeLockRelinquished("WRITE_LOCK_RELINQUISHED", LockType.write, LockAction.relinquish),
     ping("PING");
 
-    static MessageType fromHeader(String header) {
+    public static MessageType fromHeader(String header) {
         for (MessageType messageType : values()) {
             if (header.equals(messageType.getHeader())) {
                 return messageType;
@@ -24,7 +24,7 @@ enum MessageType {
         return null;
     }
 
-    static MessageType forLockTypeAndLockAction(LockType lockType, LockAction lockAction) {
+    public static MessageType forLockTypeAndLockAction(LockType lockType, LockAction lockAction) {
         for (MessageType messageType : values()) {
             if (lockType.equals(messageType.getLockType()) && lockAction.equals(messageType.getLockAction())) {
                 return messageType;

@@ -1,5 +1,8 @@
-package com.stephengoeddel.synchronization;
+package com.stephengoeddel.synchronization.processServers.time;
 
+
+import com.stephengoeddel.synchronization.enums.MessageType;
+import com.stephengoeddel.synchronization.node.Node;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -7,11 +10,11 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-class TimeSynchronizationServer implements Runnable {
+public class TimeSynchronizationServer implements Runnable {
     private Node node;
 
 
-    TimeSynchronizationServer(Node node) {
+    public TimeSynchronizationServer(Node node) {
         this.node = node;
     }
 

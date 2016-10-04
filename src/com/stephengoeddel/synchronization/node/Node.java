@@ -1,4 +1,8 @@
-package com.stephengoeddel.synchronization;
+package com.stephengoeddel.synchronization.node;
+
+import com.stephengoeddel.synchronization.enums.LockAction;
+import com.stephengoeddel.synchronization.enums.LockType;
+import com.stephengoeddel.synchronization.enums.MessageType;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -7,7 +11,7 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.*;
 
-class Node {
+public class Node {
     private NodeRepresentation thisNode;
     private List<NodeRepresentation> nodesInRing;
     private NodeRepresentation coordinatorNode;
@@ -19,7 +23,7 @@ class Node {
     private boolean hasWriteLock;
 
 
-    static Node createNode(List<String> hostsInRing, List<Integer> portsInRing, String host, int port) {
+    public static Node createNode(List<String> hostsInRing, List<Integer> portsInRing, String host, int port) {
         if (hostsInRing.size() != portsInRing.size()) {
             throw new IllegalArgumentException("Hosts list size does not match ports list size");
         }
@@ -46,12 +50,12 @@ class Node {
         lockQueue = new ArrayList<>();
     }
 
-    void sendElectionMessage() {
+    public void sendElectionMessage() {
         System.out.println(thisNode.getName() + " is requesting a new election.");
         sendMessageIncludingNodes(MessageType.election, new ArrayList<>());
     }
 
-    void handleIncomingElectionMessage(List<String> nodes) {
+    public void handleIncomingElectionMessage(List<String> nodes) {
         System.out.println(thisNode.getName() + " is handling an incoming election message.");
         boolean electionIsComplete = nodes.contains(thisNode.getName());
         if (electionIsComplete) {
@@ -64,16 +68,19 @@ class Node {
         }
     }
 
-    void handleIncomingCoordinationMessage(String coordinatorName, List<String> nodes) {
+    public void handleIncomingCoordinationMessage(String coordinatorName, List<String> nodes) {
         coordinatorNode = NodeRepresentation.fromName(coordinatorName);
         System.out.println(thisNode.getName() + " has updated its coordinator to " + coordinatorNode.getName());
+        hasWriteLock = false;
+        hasReadLock = false;
+        System.out.println(thisNode.getName() + " has relinquished any active locks due to receiving a new coordinator.");
         boolean coordinationIsComplete = nodes.contains(thisNode.getName());
         if (!coordinationIsComplete) {
             sendMessageIncludingNodes(MessageType.coordinator, nodes);
         }
     }
 
-    boolean isCoordinatorActive() {
+    public boolean isCoordinatorActive() {
         if (!isCoordinator()) {
             try {
                 Socket socket = new Socket(coordinatorNode.getHost(), coordinatorNode.getElectionPort());
@@ -149,7 +156,7 @@ class Node {
         return nodeRepresentations.get(nodeRepresentations.size() - 1);
     }
 
-    void pollOtherNodesForTimeAndNotifyOffsets() {
+    public void pollOtherNodesForTimeAndNotifyOffsets() {
         Map<NodeRepresentation, Long> timeFromNodes = new HashMap<>();
         for (NodeRepresentation node : nodesInRing) {
             if (node.equals(thisNode)) {
@@ -213,17 +220,17 @@ class Node {
         }
     }
 
-    long getTimeWithOffsetIncluded() {
+    public long getTimeWithOffsetIncluded() {
         return System.currentTimeMillis() + timeOffset;
     }
 
-    void sendLockMessageForObtainOrRelinquish(LockType lockType, LockAction lockAction) {
+    public void sendLockMessageForObtainOrRelinquish(LockType lockType, LockAction lockAction) {
         if (isCoordinator()) {
             // No need to send out a message if we are the coordinator
             if (LockAction.obtain.equals(lockAction)) {
-                obtainLock(thisNode, lockType, getTimeWithOffsetIncluded());
+                obtainLock(thisNode.getName(), lockType, getTimeWithOffsetIncluded());
             } else if (LockAction.relinquish.equals(lockAction)) {
-                relinquishLock(thisNode, lockType);
+                relinquishLock(thisNode.getName(), lockType);
             }
         } else {
             try {
@@ -276,6 +283,7 @@ class Node {
 
             if (thisNode.equals(nodeRepresentation)) {
                 grantThisNodesLock(lockAttempt.getLockType());
+                addLock(lockType, thisNode);
             } else {
                 try {
                     Socket socket = new Socket(nodeRepresentation.getHost(), nodeRepresentation.getLockPort());
@@ -289,12 +297,7 @@ class Node {
                         System.exit(1);
                     }
 
-                    if (LockType.write.equals(lockType)) {
-                        nodeWithWriteLock = nodeRepresentation;
-                    } else if (LockType.read.equals(lockType)) {
-                        nodesWithReadLocks.add(nodeRepresentation);
-                    }
-
+                    addLock(lockType, nodeRepresentation);
                     socket.close();
                 } catch (Exception ignore) {
                     System.out.println(thisNode.getName() + " attempted to grant access to a " + lockType + " lock, but " + nodeRepresentation.getName() + " was unavailable");
@@ -302,14 +305,17 @@ class Node {
             }
         }
 
+        System.out.println();
         System.out.println("------------------------------------------------");
         System.out.println("After handing out " + lockAttemptsToBeGranted.size() + " lock(s) the queue now has " + lockQueue.size() + " lock request(s) left.");
-        System.out.println("There are now " + nodesWithReadLocks.size() + " nodes with read locks.");
+        System.out.println("There are now " + nodesWithReadLocks.size() + " node(s) with read locks.");
         System.out.println("The write lock is currently " + (writeLockCurrentlyOut() ? "in use" : "free"));
         System.out.println("------------------------------------------------");
+        System.out.println();
     }
 
-    void relinquishLock(NodeRepresentation nodeRepresentation, LockType lockType) {
+    public void relinquishLock(String nodeName, LockType lockType) {
+        NodeRepresentation nodeRepresentation = NodeRepresentation.fromName(nodeName);
         if (LockType.write.equals(lockType)) {
             removeWriteLock(nodeRepresentation);
         } else if (LockType.read.equals(lockType)) {
@@ -319,7 +325,8 @@ class Node {
         grantAccessToApplicableLocksAndSendMessage();
     }
 
-    void obtainLock(NodeRepresentation nodeRepresentation, LockType lockType, long timeOfAttempt) {
+    public void obtainLock(String nodeName, LockType lockType, long timeOfAttempt) {
+        NodeRepresentation nodeRepresentation = NodeRepresentation.fromName(nodeName);
         LockAttempt lockAttempt = new LockAttempt(nodeRepresentation, timeOfAttempt, lockType);
         addLockAttemptToLockQueue(lockAttempt);
         grantAccessToApplicableLocksAndSendMessage();
@@ -354,6 +361,14 @@ class Node {
         System.out.println("there are now " + nodesWithReadLocks.size() + " nodes with read locks.");
     }
 
+    private void addLock(LockType lockType, NodeRepresentation nodeRepresentation) {
+        if (LockType.write.equals(lockType)) {
+            nodeWithWriteLock = nodeRepresentation;
+        } else if (LockType.read.equals(lockType)) {
+            nodesWithReadLocks.add(nodeRepresentation);
+        }
+    }
+
     private void addLockAttemptToLockQueue(LockAttempt lockAttempt) {
         if (!lockQueue.contains(lockAttempt)) {
             lockQueue.add(lockAttempt);
@@ -361,35 +376,35 @@ class Node {
         }
     }
 
-    void updateTimeOffset(long timeOffsetChange) {
+    public void updateTimeOffset(long timeOffsetChange) {
         timeOffset += timeOffsetChange;
     }
 
-    boolean isCoordinator() {
+    public boolean isCoordinator() {
         return thisNode.equals(coordinatorNode);
     }
 
-    String getName() {
+    public String getName() {
         return thisNode.getName();
     }
 
-    int getElectionPort() {
+    public int getElectionPort() {
         return thisNode.getElectionPort();
     }
 
-    int getTimePollingPort() {
+    public int getTimePollingPort() {
         return thisNode.getTimePollingPort();
     }
 
-    int getLockPort() {
+    public int getLockPort() {
         return thisNode.getLockPort();
     }
 
-    boolean isHasReadLock() {
+    public boolean isHasReadLock() {
         return hasReadLock;
     }
 
-    void relinquishThisNodesLock(LockType lockType) {
+    public void relinquishThisNodesLock(LockType lockType) {
         if (LockType.write.equals(lockType)) {
             hasWriteLock = false;
         } else if (LockType.read.equals(lockType)) {
@@ -399,7 +414,7 @@ class Node {
         System.out.println(thisNode.getName() + " has relinquished its " + lockType.name() + " lock locally.");
     }
 
-    void grantThisNodesLock(LockType lockType) {
+    public void grantThisNodesLock(LockType lockType) {
         if (LockType.write.equals(lockType)) {
             hasWriteLock = true;
         } else if (LockType.read.equals(lockType)) {
@@ -409,7 +424,7 @@ class Node {
         System.out.println(thisNode.getName() + " has been granted a " + lockType.name() + " lock.");
     }
 
-    boolean isHasWriteLock() {
+    public boolean isHasWriteLock() {
         return hasWriteLock;
     }
 }

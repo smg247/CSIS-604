@@ -1,5 +1,10 @@
-package com.stephengoeddel.synchronization;
+package com.stephengoeddel.synchronization.processServers.fileLock;
 
+
+import com.stephengoeddel.synchronization.enums.LockAction;
+import com.stephengoeddel.synchronization.enums.LockType;
+import com.stephengoeddel.synchronization.enums.MessageType;
+import com.stephengoeddel.synchronization.node.Node;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -35,11 +40,10 @@ public class LockServer implements Runnable {
                             } else {
                                 String nodeName = inputReader.readLine();
                                 long timeOfAttempt = Long.valueOf(inputReader.readLine());
-                                NodeRepresentation nodeRepresentation = NodeRepresentation.fromName(nodeName);
                                 if (LockAction.obtain.equals(lockAction)) {
-                                    node.obtainLock(nodeRepresentation, lockType, timeOfAttempt);
+                                    node.obtainLock(nodeName, lockType, timeOfAttempt);
                                 } else if (LockAction.relinquish.equals(lockAction)) {
-                                    node.relinquishLock(nodeRepresentation, lockType);
+                                    node.relinquishLock(nodeName, lockType);
                                 }
                             }
                         }

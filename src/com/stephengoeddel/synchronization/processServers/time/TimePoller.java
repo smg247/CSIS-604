@@ -1,10 +1,12 @@
-package com.stephengoeddel.synchronization;
+package com.stephengoeddel.synchronization.processServers.time;
 
-class TimePoller implements Runnable {
+import com.stephengoeddel.synchronization.node.Node;
+
+public class TimePoller implements Runnable {
     private Node node;
 
 
-    TimePoller(Node node) {
+    public TimePoller(Node node) {
         this.node = node;
     }
 

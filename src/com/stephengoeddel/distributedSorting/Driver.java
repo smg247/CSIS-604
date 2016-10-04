@@ -146,7 +146,7 @@ public class Driver {
             }
             return threads;
         } else {
-            throw new IllegalArgumentException("Number of subLists does not match the number of servers");
+            throw new IllegalArgumentException("Number of subLists does not match the number of processServers");
         }
     }
 

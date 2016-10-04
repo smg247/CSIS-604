@@ -1,11 +1,13 @@
-package com.stephengoeddel.synchronization;
+package com.stephengoeddel.synchronization.processServers.election;
 
 
-class CoordinatorChecker implements Runnable {
+import com.stephengoeddel.synchronization.node.Node;
+
+public class CoordinatorChecker implements Runnable {
     private Node node;
 
 
-    CoordinatorChecker(Node node) {
+    public CoordinatorChecker(Node node) {
         this.node = node;
     }
 
