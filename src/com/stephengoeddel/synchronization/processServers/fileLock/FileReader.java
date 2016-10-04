@@ -33,9 +33,6 @@ public class FileReader implements Runnable {
                 if (!node.isHasReadLock()) {
                     node.sendLockMessageForObtainOrRelinquish(LockType.read, LockAction.obtain);
                 }
-//                while (!node.isHasReadLock()) {
-//                    Thread.sleep(3000);
-//                }
                 if (node.isHasReadLock()) {
                     outputFileContents();
                     node.relinquishThisNodesLock(LockType.read);

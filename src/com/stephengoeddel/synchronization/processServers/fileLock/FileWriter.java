@@ -29,9 +29,6 @@ public class FileWriter implements Runnable {
                 if (!node.isHasWriteLock()) {
                     node.sendLockMessageForObtainOrRelinquish(LockType.write, LockAction.obtain);
                 }
-//                while (!node.isHasWriteLock()) {
-//                    Thread.sleep(3000);
-//                }
                 if (node.isHasWriteLock()) {
                     writeToFile();
                     node.relinquishThisNodesLock(LockType.write);
