@@ -10,11 +10,11 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-public class TimeSynchronizationServer implements Runnable {
+public class TimeSynchronizationHandler implements Runnable {
     private Node node;
 
 
-    public TimeSynchronizationServer(Node node) {
+    public TimeSynchronizationHandler(Node node) {
         this.node = node;
     }
 
@@ -49,7 +49,7 @@ public class TimeSynchronizationServer implements Runnable {
                 }
             }
         } catch(Exception e) {
-            System.out.println("Issue in the TimeSynchronizationServer: " + e.getMessage());
+            System.out.println("Issue in the TimeSynchronizationHandler: " + e.getMessage());
         } finally {
             System.out.println("Exiting " + node.getName() + ".");
             try {

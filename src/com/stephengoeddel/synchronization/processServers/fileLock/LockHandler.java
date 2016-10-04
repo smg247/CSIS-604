@@ -11,11 +11,11 @@ import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-public class LockServer implements Runnable {
+public class LockHandler implements Runnable {
     private Node node;
 
 
-    public LockServer(Node node) {
+    public LockHandler(Node node) {
         this.node = node;
     }
 
@@ -48,14 +48,14 @@ public class LockServer implements Runnable {
                             }
                         }
                     } else {
-                        System.out.println("LockServer received malformed message.");
+                        System.out.println("LockHandler received malformed message.");
                     }
                 } finally {
                     socket.close();
                 }
             }
         } catch(Exception e) {
-            System.out.println("Issue in the LockServer: " + e.getMessage());
+            System.out.println("Issue in the LockHandler: " + e.getMessage());
         } finally {
             System.out.println("Exiting " + node.getName() + ".");
             try {

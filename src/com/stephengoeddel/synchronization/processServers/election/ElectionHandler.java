@@ -10,11 +10,11 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ElectionServer implements Runnable {
+public class ElectionHandler implements Runnable {
     private Node node;
 
 
-    public ElectionServer(Node node) {
+    public ElectionHandler(Node node) {
         this.node = node;
     }
 
@@ -60,7 +60,7 @@ public class ElectionServer implements Runnable {
                 }
             }
         } catch(Exception e) {
-            System.out.println("Issue in the ElectionServer: " + e.getMessage());
+            System.out.println("Issue in the ElectionHandler: " + e.getMessage());
         } finally {
             System.out.println("Exiting " + node.getName() + ".");
             try {
