@@ -11,7 +11,12 @@ class Node {
     private NodeRepresentation thisNode;
     private List<NodeRepresentation> nodesInRing;
     private NodeRepresentation coordinatorNode;
+    private Set<NodeRepresentation> nodesWithReadLocks;
+    private NodeRepresentation nodeWithWriteLock;
+    private List<LockAttempt> lockQueue;
     private long timeOffset;
+    private boolean hasReadLock;
+    private boolean hasWriteLock;
 
 
     static Node createNode(List<String> hostsInRing, List<Integer> portsInRing, String host, int port) {
@@ -37,6 +42,8 @@ class Node {
         this.thisNode = thisNode;
         this.nodesInRing = nodesInRing;
         timeOffset = 0;
+        nodesWithReadLocks = new HashSet<>();
+        lockQueue = new ArrayList<>();
     }
 
     void sendElectionMessage() {
@@ -210,6 +217,150 @@ class Node {
         return System.currentTimeMillis() + timeOffset;
     }
 
+    void sendLockMessageForObtainOrRelinquish(LockType lockType, LockAction lockAction) {
+        if (isCoordinator()) {
+            // No need to send out a message if we are the coordinator
+            if (LockAction.obtain.equals(lockAction)) {
+                obtainLock(thisNode, lockType, getTimeWithOffsetIncluded());
+            } else if (LockAction.relinquish.equals(lockAction)) {
+                relinquishLock(thisNode, lockType);
+            }
+        } else {
+            try {
+                Socket socket = new Socket(coordinatorNode.getHost(), coordinatorNode.getLockPort());
+                PrintWriter printWriter = new PrintWriter(socket.getOutputStream(), true);
+                MessageType messageType = MessageType.forLockTypeAndLockAction(lockType, lockAction);
+                if (messageType != null) {
+                    printWriter.println(messageType.getHeader());
+                    printWriter.println(thisNode.getName());
+                    printWriter.println(getTimeWithOffsetIncluded());
+                    printWriter.println(".");
+                } else {
+                    System.out.println("Lock Type is not valid.");
+                    System.exit(1);
+                }
+
+                socket.close();
+
+                System.out.println(thisNode.getName() + " has requested to " + lockAction.name() + " a " + lockType.name() + " lock.");
+            } catch (Exception ignore) {
+                System.out.println(thisNode.getName() + " noticed that the coordinator was down while attempting to " + lockAction.name() + " a lock.");
+                sendElectionMessage();
+            }
+        }
+    }
+
+    private List<LockAttempt> determineLockAttemptsToBeGranted() {
+        List<LockAttempt> lockAttempts = new ArrayList<>();
+        if (!lockQueue.isEmpty() && !writeLockCurrentlyOut()) {
+            Collections.sort(lockQueue);
+            for (LockAttempt lockAttempt : lockQueue) {
+                if (LockType.read.equals(lockAttempt.getLockType())) {
+                    lockAttempts.add(lockAttempt);
+                } else if (!readLockCurrentlyOut() && lockAttempts.isEmpty()) {
+                    lockAttempts.add(lockAttempt);
+                    break;
+                }
+            }
+        }
+
+        return lockAttempts;
+    }
+
+    private void grantAccessToApplicableLocksAndSendMessage() {
+        List<LockAttempt> lockAttemptsToBeGranted = determineLockAttemptsToBeGranted();
+        for (LockAttempt lockAttempt : lockAttemptsToBeGranted) {
+            lockQueue.remove(lockAttempt);
+            NodeRepresentation nodeRepresentation = lockAttempt.getNodeRepresentation();
+            LockType lockType = lockAttempt.getLockType();
+
+            if (thisNode.equals(nodeRepresentation)) {
+                grantThisNodesLock(lockAttempt.getLockType());
+            } else {
+                try {
+                    Socket socket = new Socket(nodeRepresentation.getHost(), nodeRepresentation.getLockPort());
+                    PrintWriter printWriter = new PrintWriter(socket.getOutputStream(), true);
+                    MessageType messageType = MessageType.forLockTypeAndLockAction(lockType, LockAction.grant);
+                    if (messageType != null) {
+                        printWriter.println(messageType.getHeader());
+                        printWriter.println(".");
+                    } else {
+                        System.out.println("Lock Type is not valid.");
+                        System.exit(1);
+                    }
+
+                    if (LockType.write.equals(lockType)) {
+                        nodeWithWriteLock = nodeRepresentation;
+                    } else if (LockType.read.equals(lockType)) {
+                        nodesWithReadLocks.add(nodeRepresentation);
+                    }
+
+                    socket.close();
+                } catch (Exception ignore) {
+                    System.out.println(thisNode.getName() + " attempted to grant access to a " + lockType + " lock, but " + nodeRepresentation.getName() + " was unavailable");
+                }
+            }
+        }
+
+        System.out.println("------------------------------------------------");
+        System.out.println("After handing out " + lockAttemptsToBeGranted.size() + " lock(s) the queue now has " + lockQueue.size() + " lock request(s) left.");
+        System.out.println("There are now " + nodesWithReadLocks.size() + " nodes with read locks.");
+        System.out.println("The write lock is currently " + (writeLockCurrentlyOut() ? "in use" : "free"));
+        System.out.println("------------------------------------------------");
+    }
+
+    void relinquishLock(NodeRepresentation nodeRepresentation, LockType lockType) {
+        if (LockType.write.equals(lockType)) {
+            removeWriteLock(nodeRepresentation);
+        } else if (LockType.read.equals(lockType)) {
+            removeReadLock(nodeRepresentation);
+        }
+
+        grantAccessToApplicableLocksAndSendMessage();
+    }
+
+    void obtainLock(NodeRepresentation nodeRepresentation, LockType lockType, long timeOfAttempt) {
+        LockAttempt lockAttempt = new LockAttempt(nodeRepresentation, timeOfAttempt, lockType);
+        addLockAttemptToLockQueue(lockAttempt);
+        grantAccessToApplicableLocksAndSendMessage();
+    }
+
+    private boolean writeLockCurrentlyOut() {
+        return nodeWithWriteLock != null;
+    }
+
+    private void removeWriteLock(NodeRepresentation nodeRepresentation) {
+        if (nodeWithWriteLock != null && nodeRepresentation.equals(nodeWithWriteLock)) {
+            nodeWithWriteLock = null;
+            System.out.println(thisNode.getName() + " just removed " + nodeRepresentation.getName() + "'s write lock.");
+        }
+    }
+
+    private boolean readLockCurrentlyOut() {
+        return nodesWithReadLocks.size() > 0;
+    }
+
+    private void removeReadLock(NodeRepresentation nodeRepresentation) {
+        Iterator<NodeRepresentation> iterator = nodesWithReadLocks.iterator();
+        while (iterator.hasNext()) {
+            NodeRepresentation nodeWithReadLock = iterator.next();
+            if (nodeWithReadLock.equals(nodeRepresentation)) {
+                iterator.remove();
+                System.out.print(thisNode.getName() + " just removed the read lock from " + nodeRepresentation.getName() + " ");
+                break;
+            }
+        }
+
+        System.out.println("there are now " + nodesWithReadLocks.size() + " nodes with read locks.");
+    }
+
+    private void addLockAttemptToLockQueue(LockAttempt lockAttempt) {
+        if (!lockQueue.contains(lockAttempt)) {
+            lockQueue.add(lockAttempt);
+            System.out.println(thisNode.getName() + " added " + lockAttempt.getNodeRepresentation().getName() + "'s lock request to the queue in slot " + lockQueue.size());
+        }
+    }
+
     void updateTimeOffset(long timeOffsetChange) {
         timeOffset += timeOffsetChange;
     }
@@ -228,5 +379,37 @@ class Node {
 
     int getTimePollingPort() {
         return thisNode.getTimePollingPort();
+    }
+
+    int getLockPort() {
+        return thisNode.getLockPort();
+    }
+
+    boolean isHasReadLock() {
+        return hasReadLock;
+    }
+
+    void relinquishThisNodesLock(LockType lockType) {
+        if (LockType.write.equals(lockType)) {
+            hasWriteLock = false;
+        } else if (LockType.read.equals(lockType)) {
+            hasReadLock = false;
+        }
+
+        System.out.println(thisNode.getName() + " has relinquished its " + lockType.name() + " lock locally.");
+    }
+
+    void grantThisNodesLock(LockType lockType) {
+        if (LockType.write.equals(lockType)) {
+            hasWriteLock = true;
+        } else if (LockType.read.equals(lockType)) {
+            hasReadLock = true;
+        }
+
+        System.out.println(thisNode.getName() + " has been granted a " + lockType.name() + " lock.");
+    }
+
+    boolean isHasWriteLock() {
+        return hasWriteLock;
     }
 }

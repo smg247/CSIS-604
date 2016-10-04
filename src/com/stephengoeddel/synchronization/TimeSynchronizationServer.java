@@ -42,7 +42,6 @@ class TimeSynchronizationServer implements Runnable {
                     System.out.println(node.getName() + " noticed that the coordinator was down while trying to respond to a time polling message, going to request a new election.");
                     node.sendElectionMessage();
                 } finally {
-                    System.out.println("Closing socket for " + node.getName());
                     socket.close();
                 }
             }

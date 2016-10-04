@@ -34,12 +34,24 @@ public class NodeDriver {
         Thread timeSynchronizationThread = new Thread(timeSynchronizationServer);
         timeSynchronizationThread.start();
 
-        CoordinatorChecker coordinatorChecker = new CoordinatorChecker(node);
-        Thread coordinatorCheckerThread = new Thread(coordinatorChecker);
-        coordinatorCheckerThread.start();
+//        CoordinatorChecker coordinatorChecker = new CoordinatorChecker(node);
+//        Thread coordinatorCheckerThread = new Thread(coordinatorChecker);
+//        coordinatorCheckerThread.start();
 
         TimePoller timePoller = new TimePoller(node);
         Thread timePollerThread = new Thread(timePoller);
         timePollerThread.start();
+
+        LockServer lockServer = new LockServer(node);
+        Thread lockServerThread = new Thread(lockServer);
+        lockServerThread.start();
+
+        FileReader fileReader = new FileReader(node);
+        Thread fileReaderThread = new Thread(fileReader);
+        fileReaderThread.start();
+
+        FileWriter fileWriter = new FileWriter(node);
+        Thread fileWriterThread = new Thread(fileWriter);
+        fileWriterThread.start();
     }
 }

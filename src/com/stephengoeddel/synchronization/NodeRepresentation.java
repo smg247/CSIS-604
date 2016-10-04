@@ -1,16 +1,18 @@
 package com.stephengoeddel.synchronization;
 
 class NodeRepresentation implements Comparable<NodeRepresentation> {
-    private static String PORT_DELIMITER = ":";
+    private static String ELECTION_PORT_DELIMITER = ":";
     private static String POSITION_DELIMITER = "-";
+
     private String host;
     private int electionPort;
     private int timePollingPort;
+    private int lockPort;
     private int positionInRing;
 
 
     static NodeRepresentation fromName(String name) {
-        int portDelimiter = name.indexOf(PORT_DELIMITER);
+        int portDelimiter = name.indexOf(ELECTION_PORT_DELIMITER);
         int positionDelimiter = name.indexOf(POSITION_DELIMITER);
         String host = name.substring(0, portDelimiter);
         int electionPort = Integer.parseInt(name.substring(portDelimiter + 1, positionDelimiter));
@@ -25,6 +27,7 @@ class NodeRepresentation implements Comparable<NodeRepresentation> {
         this.positionInRing = positionInRing;
 
         timePollingPort = electionPort + 1;
+        lockPort = electionPort + 2;
     }
 
     String getHost() {
@@ -39,8 +42,12 @@ class NodeRepresentation implements Comparable<NodeRepresentation> {
         return timePollingPort;
     }
 
+    int getLockPort() {
+        return lockPort;
+    }
+
     String getName() {
-        return host + PORT_DELIMITER + electionPort + POSITION_DELIMITER + positionInRing;
+        return host + ELECTION_PORT_DELIMITER + electionPort + POSITION_DELIMITER + positionInRing;
     }
 
     @Override
