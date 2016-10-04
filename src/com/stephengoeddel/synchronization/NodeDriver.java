@@ -19,10 +19,12 @@ public class NodeDriver {
         List<String> argList = Arrays.asList(args);
         String host = argList.get(0);
         int port = Integer.parseInt(argList.get(1));
+        String fileServerHost = argList.get(2);
+        int fileServerPort = Integer.parseInt(argList.get(3));
 
         List<String> hostsInRing = new ArrayList<>();
         List<Integer> portsInRing = new ArrayList<>();
-        List<String> rawRingInformation = argList.subList(2, argList.size());
+        List<String> rawRingInformation = argList.subList(4, argList.size());
         for (int i = 0; i < rawRingInformation.size(); i++) {
             String hostOrPort = rawRingInformation.get(i);
             if (i % 2 == 0) {
@@ -54,11 +56,11 @@ public class NodeDriver {
         Thread lockHandlerThread = new Thread(lockHandler);
         lockHandlerThread.start();
 
-        FileReader fileReader = new FileReader(node);
+        FileReader fileReader = new FileReader(node, fileServerHost, fileServerPort);
         Thread fileReaderThread = new Thread(fileReader);
         fileReaderThread.start();
 
-        FileWriter fileWriter = new FileWriter(node);
+        FileWriter fileWriter = new FileWriter(node, fileServerHost, fileServerPort);
         Thread fileWriterThread = new Thread(fileWriter);
         fileWriterThread.start();
     }
