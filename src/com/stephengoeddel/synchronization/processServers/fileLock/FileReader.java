@@ -39,8 +39,7 @@ public class FileReader implements Runnable {
                     node.sendLockMessageForObtainOrRelinquish(LockType.read, LockAction.relinquish);
                 }
             } catch (Exception e) {
-                System.out.println("FileReader stopped: " + e.getMessage());
-                System.exit(1);
+                System.out.println("FileReader encountered error: " + e.getMessage());
             }
         }
     }
