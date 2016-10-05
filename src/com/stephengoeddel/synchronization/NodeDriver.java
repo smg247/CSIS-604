@@ -20,7 +20,8 @@ public class NodeDriver {
         String host = argList.get(0);
         int port = Integer.parseInt(argList.get(1));
         String fileServerHost = argList.get(2);
-        int fileServerPort = Integer.parseInt(argList.get(3));
+        int fileServerReadPort = Integer.parseInt(argList.get(3));
+        int fileServerWritePort = fileServerReadPort + 1;
 
         List<String> hostsInRing = new ArrayList<>();
         List<Integer> portsInRing = new ArrayList<>();
@@ -56,11 +57,11 @@ public class NodeDriver {
         Thread lockHandlerThread = new Thread(lockHandler);
         lockHandlerThread.start();
 
-        FileReader fileReader = new FileReader(node, fileServerHost, fileServerPort);
+        FileReader fileReader = new FileReader(node, fileServerHost, fileServerReadPort);
         Thread fileReaderThread = new Thread(fileReader);
         fileReaderThread.start();
 
-        FileWriter fileWriter = new FileWriter(node, fileServerHost, fileServerPort);
+        FileWriter fileWriter = new FileWriter(node, fileServerHost, fileServerWritePort);
         Thread fileWriterThread = new Thread(fileWriter);
         fileWriterThread.start();
     }
