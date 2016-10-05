@@ -24,6 +24,7 @@ public class FileActionDriver {
                         while ((line = fileReader.readLine()) != null) {
                             printWriter.println(line);
                         }
+                        printWriter.println(".");
 
                         printWriter.close();
                         fileReader.close();

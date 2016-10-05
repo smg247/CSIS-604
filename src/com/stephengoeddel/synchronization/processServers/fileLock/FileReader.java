@@ -55,8 +55,7 @@ public class FileReader implements Runnable {
 
         List<String> contentsOfFile = new ArrayList<>();
         String line;
-        while ((line = inputReader.readLine()) != null) {
-            System.out.println("Reading a line.");
+        while ((line = inputReader.readLine()) != null && !line.equals(".")) {
             contentsOfFile.add(line);
         }
 
