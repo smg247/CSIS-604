@@ -26,7 +26,6 @@ public class FileActionDriver {
                         }
                         printWriter.println(".");
 
-                        printWriter.close();
                         fileReader.close();
                         System.out.println("Transmitted the lines of " + FILE_NAME + ".");
                     } else if (FileAccessType.write.equals(fileAccessType)) {
